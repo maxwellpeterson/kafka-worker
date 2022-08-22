@@ -54,14 +54,15 @@ export default {
   },
 };
 
-type kafkaString = string | null;
+type KafkaString = string | null;
+type KafkaArray<T> = T[] | null;
 
 interface BaseKafkaRequest {
   // int16
   apiVersion: number;
   // int32
   correlationId: number;
-  clientId: kafkaString;
+  clientId: KafkaString;
 }
 
 // int16
@@ -71,13 +72,13 @@ enum ApiKey {
 
 // int16
 enum ErrorCode {
-  NoError = 1,
+  NoError = 0,
 }
 
 type MetadataRequest = BaseKafkaRequest & {
   apiKey: ApiKey.MetadataRequest;
   message: {
-    topics: kafkaString[];
+    topics: KafkaArray<KafkaString>;
   };
 };
 
@@ -102,6 +103,12 @@ const handleRequest = (env: Env, buffer: ArrayBuffer): ArrayBuffer => {
     clientId: decoder.readString(),
   };
 
+  if (request.apiVersion !== 0) {
+    throw new Error(
+      `Unsupported version of metadata api: expected 0 but got ${request.apiVersion}`
+    );
+  }
+
   switch (apiKey) {
     case ApiKey.MetadataRequest:
       const message = decodeMetadataRequest(decoder);
@@ -115,17 +122,17 @@ const decodeMetadataRequest = (decoder: Decoder): Message<MetadataRequest> => {
   return { topics: decoder.readArray(() => decoder.readString()) };
 };
 
-const brokerNodeId = 1;
+const brokerNodeId = 100;
 const workerHost = "kafka-worker.archmap.workers.dev";
 const httpsPort = 443;
 const stubTopicName = "test-topic";
-const stubPartitionId = 1;
+const stubPartitionId = 1000;
 
 const handleMetadataRequest = (
   env: Env,
   request: MetadataRequest
 ): ArrayBuffer => {
-  console.log(`Received metadata request: ${request}`);
+  console.log(`Received metadata request: ${JSON.stringify(request, null, 2)}`);
   const response = {
     brokers: [{ nodeId: brokerNodeId, host: workerHost, port: httpsPort }],
     topicMetadata: [
@@ -137,15 +144,17 @@ const handleMetadataRequest = (
             partitionErrorCode: ErrorCode.NoError,
             partitionId: stubPartitionId,
             leader: brokerNodeId,
-            replicas: [],
-            isr: [],
+            replicas: [brokerNodeId],
+            isr: [brokerNodeId],
           },
         ],
       },
     ],
   };
-  console.log(`Sending metadata response: ${response}`);
-  return encodeMetadataResponse(response, request.correlationId);
+  console.log(
+    `Sending metadata response: ${JSON.stringify(response, null, 2)}`
+  );
+  return encodeMetadataResponse(request.correlationId, response);
 };
 
 const initialEncodeBufferSize = 64;
@@ -186,14 +195,14 @@ const encodeMetadataResponse = (
 };
 
 interface MetadataResponse {
-  brokers: Broker[];
-  topicMetadata: TopicMetadata[];
+  brokers: KafkaArray<Broker>;
+  topicMetadata: KafkaArray<TopicMetadata>;
 }
 
 interface Broker {
   // int32
   nodeId: number;
-  host: kafkaString;
+  host: KafkaString;
   // int32
   port: number;
 }
@@ -201,8 +210,8 @@ interface Broker {
 interface TopicMetadata {
   // int16
   topicErrorCode: number;
-  topicName: kafkaString;
-  partitionMetadata: PartitionMetadata[];
+  topicName: KafkaString;
+  partitionMetadata: KafkaArray<PartitionMetadata>;
 }
 
 interface PartitionMetadata {
@@ -213,9 +222,9 @@ interface PartitionMetadata {
   // int32
   leader: number;
   // int32
-  replicas: number[];
+  replicas: KafkaArray<number>;
   // int32
-  isr: number[];
+  isr: KafkaArray<number>;
 }
 
 const int16Size = 2;
@@ -242,7 +251,7 @@ class Decoder {
     return value;
   }
 
-  readString(): kafkaString {
+  readString(): KafkaString {
     const size = this.readInt16();
     if (size === -1) {
       return null;
@@ -256,8 +265,12 @@ class Decoder {
     return value;
   }
 
-  readArray<T>(readElement: (index: number) => T): T[] {
+  readArray<T>(readElement: (index: number) => T): KafkaArray<T> {
     const size = this.readInt32();
+    if (size === -1) {
+      return null;
+    }
+    console.log(`Allocating Array of size ${size}`);
     const values = new Array<T>(size);
     for (let i = 0; i < size; i++) {
       values[i] = readElement(i);
@@ -270,15 +283,16 @@ class Encoder {
   private view: DataView;
   private offset: number;
 
-  constructor(buffer: ArrayBuffer, headerSize = 0) {
+  constructor(buffer: ArrayBuffer) {
     this.view = new DataView(buffer);
-    this.offset = headerSize;
+    this.offset = int32Size;
   }
 
   private checkCapacity(size: number) {
     const nextLength = this.offset + size;
     if (nextLength > this.view.byteLength) {
-      const newCapacity = Math.max(2 * nextLength, 2 * this.view.byteLength);
+      const newCapacity = 2 * nextLength;
+      console.log(`Allocating ArrayBuffer of size ${newCapacity}`);
       const newBuffer = new ArrayBuffer(newCapacity);
       // Reserved header space is preserved after copy
       new Uint8Array(newBuffer).set(new Uint8Array(this.view.buffer));
@@ -298,7 +312,7 @@ class Encoder {
     this.offset += int32Size;
   }
 
-  writeString(value: kafkaString) {
+  writeString(value: KafkaString) {
     if (value === null) {
       this.writeInt16(-1);
       return;
@@ -310,11 +324,14 @@ class Encoder {
     this.offset += bytes.length;
   }
 
-  writeArray<T>(values: T[], writeElement: (value: T) => void) {
-    const startOffset = this.offset;
-    this.offset += int32Size;
+  writeArray<T>(values: KafkaArray<T>, writeElement: (value: T) => void) {
+    if (values === null) {
+      this.writeInt32(-1);
+      return;
+    }
+    console.log(`Writing array of length ${values.length}`);
+    this.writeInt32(values.length);
     values.forEach(writeElement);
-    this.view.setInt32(startOffset, this.offset - startOffset);
   }
 
   sizedBuffer(): ArrayBuffer {
