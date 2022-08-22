@@ -58,10 +58,8 @@ type KafkaString = string | null;
 type KafkaArray<T> = T[] | null;
 
 interface BaseKafkaRequest {
-  // int16
-  apiVersion: number;
-  // int32
-  correlationId: number;
+  apiVersion: Int16;
+  correlationId: Int32;
   clientId: KafkaString;
 }
 
@@ -84,6 +82,10 @@ type MetadataRequest = BaseKafkaRequest & {
 
 type KafkaRequest = MetadataRequest;
 type Message<T extends KafkaRequest> = T["message"];
+
+// These don't add type safety, but help with labeling
+type Int16 = number;
+type Int32 = number;
 
 const handleRequest = (env: Env, buffer: ArrayBuffer): ArrayBuffer => {
   const decoder = new Decoder(buffer);
@@ -160,7 +162,7 @@ const handleMetadataRequest = (
 const initialEncodeBufferSize = 64;
 
 const encodeMetadataResponse = (
-  correlationId: number,
+  correlationId: Int32,
   response: MetadataResponse
 ): ArrayBuffer => {
   const buffer = new ArrayBuffer(initialEncodeBufferSize);
@@ -200,31 +202,23 @@ interface MetadataResponse {
 }
 
 interface Broker {
-  // int32
-  nodeId: number;
+  nodeId: Int32;
   host: KafkaString;
-  // int32
-  port: number;
+  port: Int32;
 }
 
 interface TopicMetadata {
-  // int16
-  topicErrorCode: number;
+  topicErrorCode: Int16;
   topicName: KafkaString;
   partitionMetadata: KafkaArray<PartitionMetadata>;
 }
 
 interface PartitionMetadata {
-  // int16
-  partitionErrorCode: number;
-  // int32
-  partitionId: number;
-  // int32
-  leader: number;
-  // int32
-  replicas: KafkaArray<number>;
-  // int32
-  isr: KafkaArray<number>;
+  partitionErrorCode: Int16;
+  partitionId: Int32;
+  leader: Int32;
+  replicas: KafkaArray<Int32>;
+  isr: KafkaArray<Int32>;
 }
 
 const int16Size = 2;
@@ -239,13 +233,13 @@ class Decoder {
     this.offset = 0;
   }
 
-  readInt16(): number {
+  readInt16(): Int16 {
     const value = this.view.getInt16(this.offset);
     this.offset += int16Size;
     return value;
   }
 
-  readInt32(): number {
+  readInt32(): Int32 {
     const value = this.view.getInt32(this.offset);
     this.offset += int32Size;
     return value;
@@ -300,13 +294,13 @@ class Encoder {
     }
   }
 
-  writeInt16(value: number) {
+  writeInt16(value: Int16) {
     this.checkCapacity(int16Size);
     this.view.setInt16(this.offset, value);
     this.offset += int16Size;
   }
 
-  writeInt32(value: number) {
+  writeInt32(value: Int32) {
     this.checkCapacity(int32Size);
     this.view.setInt32(this.offset, value);
     this.offset += int32Size;
