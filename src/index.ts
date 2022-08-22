@@ -63,18 +63,22 @@ interface BaseKafkaRequest {
   clientId: KafkaString;
 }
 
-// int16
-enum ApiKey {
-  MetadataRequest = 3,
-}
+type ValueOf<T> = T[keyof T];
 
 // int16
-enum ErrorCode {
-  NoError = 0,
-}
+const ApiKey = {
+  MetadataRequest: 3,
+} as const;
+type ApiKey = ValueOf<typeof ApiKey>;
+
+// int16
+const ErrorCode = {
+  None: 0,
+} as const;
+type ErrorCode = ValueOf<typeof ErrorCode>;
 
 type MetadataRequest = BaseKafkaRequest & {
-  apiKey: ApiKey.MetadataRequest;
+  apiKey: typeof ApiKey.MetadataRequest;
   message: {
     topics: KafkaArray<KafkaString>;
   };
@@ -139,11 +143,11 @@ const handleMetadataRequest = (
     brokers: [{ nodeId: brokerNodeId, host: workerHost, port: httpsPort }],
     topicMetadata: [
       {
-        topicErrorCode: ErrorCode.NoError,
+        topicErrorCode: ErrorCode.None,
         topicName: stubTopicName,
         partitionMetadata: [
           {
-            partitionErrorCode: ErrorCode.NoError,
+            partitionErrorCode: ErrorCode.None,
             partitionId: stubPartitionId,
             leader: brokerNodeId,
             replicas: [brokerNodeId],
@@ -208,13 +212,13 @@ interface Broker {
 }
 
 interface TopicMetadata {
-  topicErrorCode: Int16;
+  topicErrorCode: ErrorCode;
   topicName: KafkaString;
   partitionMetadata: KafkaArray<PartitionMetadata>;
 }
 
 interface PartitionMetadata {
-  partitionErrorCode: Int16;
+  partitionErrorCode: ErrorCode;
   partitionId: Int32;
   leader: Int32;
   replicas: KafkaArray<Int32>;
