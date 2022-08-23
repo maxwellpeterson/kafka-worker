@@ -38,7 +38,7 @@ export const fetchClusterMetadata = async (
 
 const topicStateKey = "TopicState";
 const initialTopicState: TopicState = {
-  topics: [{ name: "test-topic", partitions: [{ id: 999 }] }],
+  topics: [{ name: "test-topic", partitions: [{ index: 999 }] }],
 };
 
 export class Cluster {
@@ -84,8 +84,8 @@ export class Cluster {
           const topic = state.topics.find(({ name }) => name === topicName);
           if (topic === undefined) {
             return {
-              topicErrorCode: ErrorCode.UnknownTopicOrPartition,
-              topicName: topicName,
+              errorCode: ErrorCode.UnknownTopicOrPartition,
+              name: topicName,
               partitions: null,
             };
           }
@@ -97,14 +97,14 @@ export class Cluster {
 }
 
 const generateMetadata = (topic: Topic): TopicMetadata => ({
-  topicErrorCode: ErrorCode.None,
-  topicName: topic.name,
+  errorCode: ErrorCode.None,
+  name: topic.name,
   partitions: topic.partitions.map((partition) => ({
-    partitionErrorCode: ErrorCode.None,
-    partitionId: partition.id,
-    leader: globalBroker.nodeId,
-    replicas: [],
-    isr: [],
+    errorCode: ErrorCode.None,
+    partitionIndex: partition.index,
+    leaderId: globalBroker.nodeId,
+    replicaNodes: [],
+    isrNodes: [],
   })),
 });
 
@@ -118,5 +118,5 @@ interface Topic {
 }
 
 interface Partition {
-  id: Int32;
+  index: Int32;
 }

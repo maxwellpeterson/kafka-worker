@@ -56,8 +56,8 @@ const encodeBroker = (encoder: Encoder, broker: Broker) => {
 };
 
 const encodeTopicMetadata = (encoder: Encoder, metadata: TopicMetadata) => {
-  encoder.writeInt16(metadata.topicErrorCode);
-  encoder.writeString(metadata.topicName);
+  encoder.writeInt16(metadata.errorCode);
+  encoder.writeString(metadata.name);
   encoder.writeArray(metadata.partitions, (metadata) =>
     encodePartitionMetadata(encoder, metadata)
   );
@@ -67,11 +67,11 @@ const encodePartitionMetadata = (
   encoder: Encoder,
   metadata: PartitionMetadata
 ) => {
-  encoder.writeInt16(metadata.partitionErrorCode);
-  encoder.writeInt32(metadata.partitionId);
-  encoder.writeInt32(metadata.leader);
-  encoder.writeArray(metadata.replicas, (replica) =>
+  encoder.writeInt16(metadata.errorCode);
+  encoder.writeInt32(metadata.partitionIndex);
+  encoder.writeInt32(metadata.leaderId);
+  encoder.writeArray(metadata.replicaNodes, (replica) =>
     encoder.writeInt32(replica)
   );
-  encoder.writeArray(metadata.isr, (isr) => encoder.writeInt32(isr));
+  encoder.writeArray(metadata.isrNodes, (isr) => encoder.writeInt32(isr));
 };
