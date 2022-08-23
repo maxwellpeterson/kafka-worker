@@ -12,12 +12,13 @@ export type KafkaArray<T> = T[] | null;
 
 // ApiKey is an Int16
 export const ApiKey = {
-  MetadataRequest: 3,
+  Metadata: 3,
 } as const;
 export type ApiKey = ValueOf<typeof ApiKey>;
 
 // ErrorCode is an Int16
 export const ErrorCode = {
   None: 0,
+  UnknownTopicOrPartition: 3,
 } as const;
 export type ErrorCode = ValueOf<typeof ErrorCode>;

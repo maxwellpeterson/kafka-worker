@@ -1,3 +1,10 @@
 name = "kafka-worker"
 main = "src/index.ts"
 compatibility_date = "2022-08-21"
+
+[durable_objects]
+bindings = [{name="CLUSTER", class_name="Cluster"}]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["Cluster"]

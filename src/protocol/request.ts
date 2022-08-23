@@ -1,10 +1,13 @@
 import { Env } from "src/common";
 import { Decoder } from "src/protocol/decoder";
 import { ApiKey, int32Size } from "src/protocol/common";
-import { handleMetadataRequest } from "src/protocol/api/metadata";
+import { metadataRequestEntrypoint } from "src/protocol/api/metadata/entrypoint";
 import { Encoder } from "src/protocol/encoder";
 
-export const handleRequest = (env: Env, buffer: ArrayBuffer): ArrayBuffer => {
+export const handleRequest = async (
+  env: Env,
+  buffer: ArrayBuffer
+): Promise<ArrayBuffer> => {
   const decoder = new Decoder(buffer);
 
   const expectedSize = decoder.readInt32();
@@ -25,8 +28,8 @@ export const handleRequest = (env: Env, buffer: ArrayBuffer): ArrayBuffer => {
   encoder.writeInt32(correlationId);
 
   switch (apiKey) {
-    case ApiKey.MetadataRequest:
-      return handleMetadataRequest(env, apiVersion, decoder, encoder);
+    case ApiKey.Metadata:
+      return await metadataRequestEntrypoint(env, apiVersion, decoder, encoder);
     default:
       throw new Error(`Unknown api key: ${apiKey}`);
   }

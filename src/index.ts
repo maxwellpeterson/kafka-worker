@@ -1,6 +1,8 @@
 import { Env } from "src/common";
 import { handleRequest } from "src/protocol/request";
 
+export { Cluster } from "src/state/cluster";
+
 export default {
   async fetch(
     request: Request,
@@ -21,12 +23,12 @@ export default {
         console.log("Received string data, but we want binary data!");
         return;
       }
-      try {
-        const response = handleRequest(env, event.data);
-        server.send(response);
-      } catch (e) {
-        console.log(`Error while processing request: ${e}`);
-      }
+
+      handleRequest(env, event.data)
+        .then((response) => server.send(response))
+        .catch((error) =>
+          console.log(`Error while processing request: ${error}`)
+        );
     });
 
     return new Response(null, {
