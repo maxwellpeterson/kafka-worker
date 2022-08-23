@@ -1,12 +1,11 @@
 import { Env } from "src/common";
-import { Broker, MetadataResponse } from "src/protocol/api/metadata/types";
+import { MetadataResponse } from "src/protocol/api/metadata/types";
 import { ErrorCode, Int32 } from "src/protocol/common";
 
 const globalClusterName = "global";
-const globalBroker: Broker = {
+const globalBroker = {
+  // This is a made up number
   nodeId: 333,
-  // TODO: Make this an env var
-  host: "kafka-worker.archmap.workers.dev",
   port: 443,
 };
 
@@ -32,7 +31,7 @@ export const fetchClusterMetadata = async (
   const state = await response.json<TopicState>();
 
   return {
-    brokers: [globalBroker],
+    brokers: [{ ...globalBroker, host: env.HOSTNAME }],
     topics: topics.map((topic) => {
       const topicState = state.topics.find(({ name }) => name === topic);
       if (topicState === undefined) {

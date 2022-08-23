@@ -1,4 +1,6 @@
 export interface Env {
+  // The hostname of this worker
+  HOSTNAME: string;
   CLUSTER: DurableObjectNamespace;
   // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
   // MY_KV_NAMESPACE: KVNamespace;
