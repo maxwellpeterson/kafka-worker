@@ -5,6 +5,9 @@ import {
   int32Size,
   KafkaString,
   KafkaArray,
+  ErrorCode,
+  Int64,
+  int64Size,
 } from "src/protocol/common";
 
 const initialBufferSize = 64;
@@ -36,10 +39,20 @@ export class Encoder {
     this.offset += int16Size;
   }
 
+  writeErrorCode(errorCode: ErrorCode) {
+    this.writeInt16(errorCode);
+  }
+
   writeInt32(value: Int32) {
     this.checkCapacity(int32Size);
     this.view.setInt32(this.offset, value);
     this.offset += int32Size;
+  }
+
+  writeInt64(value: bigint) {
+    this.checkCapacity(int64Size);
+    this.view.setBigInt64(this.offset, value);
+    this.offset += int64Size;
   }
 
   writeString(value: KafkaString) {

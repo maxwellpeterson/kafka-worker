@@ -53,4 +53,10 @@ export class Decoder {
     }
     return values;
   }
+
+  readMessageSet(size: Int32): ArrayBuffer {
+    const buffer = this.view.buffer.slice(this.offset, this.offset + size);
+    this.offset += size;
+    return buffer;
+  }
 }

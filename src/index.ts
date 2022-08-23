@@ -25,7 +25,11 @@ export default {
       }
 
       handleRequest(env, event.data)
-        .then((response) => server.send(response))
+        .then((response) => {
+          if (response !== null) {
+            server.send(response);
+          }
+        })
         .catch((error) =>
           console.log(`Error while processing request: ${error}`)
         );

@@ -7,30 +7,11 @@ import {
 } from "src/protocol/api/metadata/types";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
-import { Env } from "src/common";
 import { handleMetadataRequest } from "src/protocol/api/metadata/handler";
-
-export const metadataRequestEntrypoint = async (
-  env: Env,
-  version: number,
-  decoder: Decoder,
-  encoder: Encoder
-): Promise<ArrayBuffer> => {
-  if (version !== 0) {
-    throw new Error(
-      `Unsupported version of metadata api: expected 0 but got ${version}`
-    );
-  }
-
-  const request = decodeMetadataRequest(decoder);
-  console.log(`Received metadata request: ${JSON.stringify(request, null, 2)}`);
-
-  const response = await handleMetadataRequest(env, request);
-  console.log(
-    `Sending metadata response: ${JSON.stringify(response, null, 2)}`
-  );
-  return encodeMetadataResponse(encoder, response);
-};
+import {
+  generateCheckVersionFn,
+  generateEntrypointFn,
+} from "src/protocol/api/common";
 
 const decodeMetadataRequest = (decoder: Decoder): MetadataRequest => {
   return { topics: decoder.readArray(() => decoder.readString()) };
@@ -56,7 +37,7 @@ const encodeBroker = (encoder: Encoder, broker: Broker) => {
 };
 
 const encodeTopicMetadata = (encoder: Encoder, metadata: TopicMetadata) => {
-  encoder.writeInt16(metadata.errorCode);
+  encoder.writeErrorCode(metadata.errorCode);
   encoder.writeString(metadata.name);
   encoder.writeArray(metadata.partitions, (metadata) =>
     encodePartitionMetadata(encoder, metadata)
@@ -67,7 +48,7 @@ const encodePartitionMetadata = (
   encoder: Encoder,
   metadata: PartitionMetadata
 ) => {
-  encoder.writeInt16(metadata.errorCode);
+  encoder.writeErrorCode(metadata.errorCode);
   encoder.writeInt32(metadata.partitionIndex);
   encoder.writeInt32(metadata.leaderId);
   encoder.writeArray(metadata.replicaNodes, (replica) =>
@@ -75,3 +56,11 @@ const encodePartitionMetadata = (
   );
   encoder.writeArray(metadata.isrNodes, (isr) => encoder.writeInt32(isr));
 };
+
+export const metadataRequestEntrypoint = generateEntrypointFn(
+  "metadata",
+  generateCheckVersionFn("metadata", 0),
+  decodeMetadataRequest,
+  handleMetadataRequest,
+  encodeMetadataResponse
+);
