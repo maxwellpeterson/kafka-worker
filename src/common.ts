@@ -10,4 +10,3 @@ export interface Env {
 }
 
 export type ValueOf<T> = T[keyof T];
-export type Message<T> = T extends { message: unknown } ? T["message"] : never;

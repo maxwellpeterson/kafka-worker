@@ -1,10 +1,8 @@
 import { Env } from "src/common";
 import { Decoder } from "src/protocol/decoder";
 import { ApiKey, int32Size } from "src/protocol/common";
-import {
-  decodeMetadataRequest,
-  handleMetadataRequest,
-} from "src/protocol/api/metadata";
+import { handleMetadataRequest } from "src/protocol/api/metadata";
+import { Encoder } from "src/protocol/encoder";
 
 export const handleRequest = (env: Env, buffer: ArrayBuffer): ArrayBuffer => {
   const decoder = new Decoder(buffer);
@@ -18,22 +16,17 @@ export const handleRequest = (env: Env, buffer: ArrayBuffer): ArrayBuffer => {
   }
 
   const apiKey = decoder.readInt16();
-  const request = {
-    apiVersion: decoder.readInt16(),
-    correlationId: decoder.readInt32(),
-    clientId: decoder.readString(),
-  };
+  const apiVersion = decoder.readInt16();
+  const correlationId = decoder.readInt32();
+  // Not currently used, but need to read to move decoder cursor
+  const clientId = decoder.readString();
 
-  if (request.apiVersion !== 0) {
-    throw new Error(
-      `Unsupported version of metadata api: expected 0 but got ${request.apiVersion}`
-    );
-  }
+  const encoder = new Encoder();
+  encoder.writeInt32(correlationId);
 
   switch (apiKey) {
     case ApiKey.MetadataRequest:
-      const message = decodeMetadataRequest(decoder);
-      return handleMetadataRequest(env, { apiKey, ...request, message });
+      return handleMetadataRequest(env, apiVersion, decoder, encoder);
     default:
       throw new Error(`Unknown api key: ${apiKey}`);
   }

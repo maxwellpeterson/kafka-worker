@@ -21,9 +21,3 @@ export const ErrorCode = {
   None: 0,
 } as const;
 export type ErrorCode = ValueOf<typeof ErrorCode>;
-
-export interface BaseKafkaRequest {
-  apiVersion: Int16;
-  correlationId: Int32;
-  clientId: KafkaString;
-}

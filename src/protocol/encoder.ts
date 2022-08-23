@@ -7,11 +7,14 @@ import {
   KafkaArray,
 } from "src/protocol/common";
 
+const initialBufferSize = 64;
+
 export class Encoder {
   private view: DataView;
   private offset: number;
 
-  constructor(buffer: ArrayBuffer) {
+  constructor() {
+    const buffer = new ArrayBuffer(initialBufferSize);
     this.view = new DataView(buffer);
     this.offset = int32Size;
   }
