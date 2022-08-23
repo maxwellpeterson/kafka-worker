@@ -1,5 +1,8 @@
 import { Env } from "src/common";
-import { MetadataResponse } from "src/protocol/api/metadata/types";
+import {
+  MetadataResponse,
+  TopicMetadata,
+} from "src/protocol/api/metadata/types";
 import { ErrorCode, Int32 } from "src/protocol/common";
 
 const globalClusterName = "global";
@@ -24,36 +27,13 @@ export const fetchClusterMetadata = async (
     `https://cluster.state/metadata?${searchParam}=${topics.join(sep)}`
   );
   const response = await obj.fetch(request);
+
   if (!response.ok) {
     const message = await response.text();
     throw new Error(`Error from Cluster DO: ${message}`);
   }
-  const state = await response.json<TopicState>();
 
-  return {
-    brokers: [{ ...globalBroker, host: env.HOSTNAME }],
-    topics: topics.map((topic) => {
-      const topicState = state.topics.find(({ name }) => name === topic);
-      if (topicState === undefined) {
-        return {
-          topicErrorCode: ErrorCode.UnknownTopicOrPartition,
-          topicName: topic,
-          partitions: null,
-        };
-      }
-      return {
-        topicErrorCode: ErrorCode.None,
-        topicName: topic,
-        partitions: topicState.partitions.map((partition) => ({
-          partitionErrorCode: ErrorCode.None,
-          partitionId: partition.id,
-          leader: globalBroker.nodeId,
-          replicas: [],
-          isr: [],
-        })),
-      };
-    }),
-  };
+  return await response.json<MetadataResponse>();
 };
 
 const topicStateKey = "TopicState";
@@ -63,10 +43,13 @@ const initialTopicState: TopicState = {
 
 export class Cluster {
   private readonly state: DurableObjectState;
+  private readonly env: Env;
 
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
+    this.env = env;
     this.state.blockConcurrencyWhile(async () =>
+      // TODO: Topics could be individually keyed?
       this.state.storage.put<TopicState>(topicStateKey, initialTopicState)
     );
   }
@@ -79,23 +62,51 @@ export class Cluster {
       });
     }
 
-    const topics = topicQuery === "" ? [] : topicQuery.split(",");
-    const topicState = await this.state.storage.get<TopicState>(topicStateKey);
-    if (topicState === undefined) {
+    const topicNames = topicQuery === "" ? [] : topicQuery.split(",");
+    const state = await this.state.storage.get<TopicState>(topicStateKey);
+    if (state === undefined) {
       return new Response("Couldn't load topic state", { status: 500 });
     }
 
-    // Empty list means return info on all topics
-    if (topics.length === 0) {
-      return new Response(JSON.stringify(topicState));
+    const brokers = [{ ...globalBroker, host: this.env.HOSTNAME }];
+
+    // Empty list means return metadata on all topics
+    if (topicNames.length === 0) {
+      return new Response(
+        JSON.stringify({ brokers, topics: state.topics.map(generateMetadata) })
+      );
     }
+
     return new Response(
       JSON.stringify({
-        topics: topicState.topics.filter(({ name }) => topics.includes(name)),
+        brokers,
+        topics: topicNames.map((topicName) => {
+          const topic = state.topics.find(({ name }) => name === topicName);
+          if (topic === undefined) {
+            return {
+              topicErrorCode: ErrorCode.UnknownTopicOrPartition,
+              topicName: topicName,
+              partitions: null,
+            };
+          }
+          return generateMetadata(topic);
+        }),
       })
     );
   }
 }
+
+const generateMetadata = (topic: Topic): TopicMetadata => ({
+  topicErrorCode: ErrorCode.None,
+  topicName: topic.name,
+  partitions: topic.partitions.map((partition) => ({
+    partitionErrorCode: ErrorCode.None,
+    partitionId: partition.id,
+    leader: globalBroker.nodeId,
+    replicas: [],
+    isr: [],
+  })),
+});
 
 interface TopicState {
   topics: Topic[];
