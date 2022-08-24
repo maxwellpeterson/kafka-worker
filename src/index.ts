@@ -1,6 +1,6 @@
 import { Env } from "src/common";
-import { handleRequest } from "src/protocol/request";
 
+export { Session } from "src/state/session";
 export { Cluster } from "src/state/cluster";
 
 export default {
@@ -9,35 +9,8 @@ export default {
     env: Env,
     ctx: ExecutionContext
   ): Promise<Response> {
-    const upgradeHeader = request.headers.get("Upgrade");
-    if (!upgradeHeader || upgradeHeader !== "websocket") {
-      return new Response("Expected Upgrade: websocket", { status: 426 });
-    }
-
-    const webSocketPair = new WebSocketPair();
-    const [client, server] = Object.values(webSocketPair);
-
-    server.accept();
-    server.addEventListener("message", (event) => {
-      if (typeof event.data === "string") {
-        console.log("Received string data, but we want binary data!");
-        return;
-      }
-
-      handleRequest(env, event.data)
-        .then((response) => {
-          if (response !== null) {
-            server.send(response);
-          }
-        })
-        .catch((error) =>
-          console.log(`Error while processing request: ${error}`)
-        );
-    });
-
-    return new Response(null, {
-      status: 101,
-      webSocket: client,
-    });
+    const id = env.SESSION.newUniqueId();
+    const obj = env.SESSION.get(id);
+    return await obj.fetch(request);
   },
 };

@@ -6,8 +6,15 @@ compatibility_date = "2022-08-21"
 HOSTNAME="kafka-worker.archmap.workers.dev"
 
 [durable_objects]
-bindings = [{name="CLUSTER", class_name="Cluster"}]
+bindings = [
+  {name="SESSION", class_name="Session"},
+  {name="CLUSTER", class_name="Cluster"},
+]
 
 [[migrations]]
 tag = "v1"
 new_classes = ["Cluster"]
+
+[[migrations]]
+tag = "v2"
+new_classes = ["Session"]
