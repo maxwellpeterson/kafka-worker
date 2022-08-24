@@ -36,6 +36,7 @@ export const fetchClusterMetadata = async (
   return await response.json<MetadataResponse>();
 };
 
+// TODO: Topics could be individually keyed?
 const topicStateKey = "TopicState";
 const initialTopicState: TopicState = {
   topics: [{ name: "test-topic", partitions: [{ index: 999 }] }],
@@ -48,9 +49,12 @@ export class Cluster {
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
-    this.state.blockConcurrencyWhile(async () =>
-      // TODO: Topics could be individually keyed?
-      this.state.storage.put<TopicState>(topicStateKey, initialTopicState)
+    this.state.blockConcurrencyWhile(
+      async () =>
+        await this.state.storage.put<TopicState>(
+          topicStateKey,
+          initialTopicState
+        )
     );
   }
 
@@ -70,7 +74,7 @@ export class Cluster {
 
     const brokers = [{ ...globalBroker, host: this.env.HOSTNAME }];
 
-    // Empty list means return metadata on all topics
+    // Empty list means return metadata for all topics
     if (topicNames.length === 0) {
       return new Response(
         JSON.stringify({ brokers, topics: state.topics.map(generateMetadata) })
