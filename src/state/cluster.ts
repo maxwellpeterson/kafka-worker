@@ -1,8 +1,5 @@
 import { Env } from "src/common";
-import {
-  MetadataResponse,
-  TopicMetadata,
-} from "src/protocol/api/metadata/types";
+import { MetadataResponse, TopicMetadata } from "src/protocol/api/metadata";
 import { ErrorCode, Int32 } from "src/protocol/common";
 
 const globalClusterName = "global";

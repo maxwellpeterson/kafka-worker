@@ -2,14 +2,15 @@ import { Env } from "src/common";
 import {
   decodeMetadataRequest,
   encodeMetadataResponse,
-} from "src/protocol/api/metadata/types";
+} from "src/protocol/api/metadata";
 import {
   decodeProduceRequest,
   encodeProduceResponse,
   ProduceResponse,
-} from "src/protocol/api/produce/types";
+} from "src/protocol/api/produce";
 import {
   ApiKey,
+  cleanKafkaStringArray,
   int32Size,
   KafkaArray,
   KafkaString,
@@ -146,10 +147,3 @@ export class Session {
     return encodeMetadataResponse(encoder, response);
   }
 }
-
-const cleanKafkaStringArray = (topics: KafkaArray<KafkaString>): string[] => {
-  if (topics === null) {
-    return [];
-  }
-  return topics.filter((topic): topic is string => topic !== null);
-};

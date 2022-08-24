@@ -12,6 +12,15 @@ export const int64Size = 8;
 export type KafkaString = string | null;
 export type KafkaArray<T> = T[] | null;
 
+export const cleanKafkaStringArray = (
+  strs: KafkaArray<KafkaString>
+): string[] => {
+  if (strs === null) {
+    return [];
+  }
+  return strs.filter((str): str is string => str !== null);
+};
+
 // ApiKey is an Int16
 export const ApiKey = {
   Produce: 0,
