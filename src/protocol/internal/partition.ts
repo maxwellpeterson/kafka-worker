@@ -2,15 +2,15 @@ import { ValueOf } from "src/common";
 import {
   Acks,
   ErrorCode,
-  generateEnumPredicate,
   Int16,
   Int32,
   Int64,
+  generateEnumPredicate,
   validAcks,
   validErrorCode,
 } from "src/protocol/common";
-import { Encoder } from "src/protocol/encoder";
 import { Decoder } from "src/protocol/decoder";
+import { Encoder } from "src/protocol/encoder";
 
 // We define our own grammar for the request and response format that follows
 // closely from the Kafka protocol.

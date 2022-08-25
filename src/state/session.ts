@@ -4,16 +4,16 @@ import {
   encodeMetadataResponse,
 } from "src/protocol/api/metadata";
 import {
-  decodeProduceRequest,
   ProduceResponse,
+  decodeProduceRequest,
 } from "src/protocol/api/produce";
 import { ApiKey, RequestMetadata, validApiKey } from "src/protocol/common";
 import { Decoder, KafkaRequestDecoder } from "src/protocol/decoder";
 import { Encoder, KafkaResponseEncoder } from "src/protocol/encoder";
 import {
+  PartitionApiKey,
   encodePartitionProduceRequest,
   encodePartitionRequestHeader,
-  PartitionApiKey,
 } from "src/protocol/internal/partition";
 import { fetchClusterMetadata } from "src/state/cluster";
 import { generatePartitonId, partitionStubUrl } from "src/state/partition";

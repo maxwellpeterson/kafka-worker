@@ -1,6 +1,6 @@
+import { Acks, ErrorCode, Int32, Int64, validAcks } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
-import { Acks, ErrorCode, Int32, Int64, validAcks } from "src/protocol/common";
 
 // Produce Request (Version: 0) => acks timeout_ms [topic_data]
 //   acks => INT16

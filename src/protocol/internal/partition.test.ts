@@ -1,18 +1,18 @@
+import { Acks, ErrorCode } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import {
+  PartitionApiKey,
+  PartitionProduceRequest,
+  PartitionProduceResponse,
+  PartitionRequestHeader,
   decodePartitionProduceRequest,
   decodePartitionProduceResponse,
   decodePartitionRequestHeader,
   encodePartitionProduceRequest,
   encodePartitionProduceResponse,
   encodePartitionRequestHeader,
-  PartitionApiKey,
-  PartitionProduceRequest,
-  PartitionProduceResponse,
-  PartitionRequestHeader,
 } from "src/protocol/internal/partition";
-import { Acks, ErrorCode } from "src/protocol/common";
 
 describe("PartitionRequestHeader", () => {
   type TestCase = [string, PartitionRequestHeader];

@@ -1,6 +1,6 @@
+import { ErrorCode, Int32 } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
-import { Int32, ErrorCode } from "src/protocol/common";
 
 // Metadata Request (Version: 0) => [topics]
 //   topics => name

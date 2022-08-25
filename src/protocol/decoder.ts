@@ -1,10 +1,10 @@
 import {
   Int16,
   Int32,
+  Int64,
+  KafkaArray,
   int16Size,
   int32Size,
-  KafkaArray,
-  Int64,
   int64Size,
 } from "src/protocol/common";
 
