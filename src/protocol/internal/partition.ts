@@ -1,11 +1,13 @@
 import { ValueOf } from "src/common";
 import {
+  Acks,
   ErrorCode,
   generateEnumPredicate,
   Int16,
   Int32,
   Int64,
   String,
+  validAcks,
   validErrorCode,
 } from "src/protocol/common";
 import { Encoder } from "src/protocol/encoder";
@@ -22,16 +24,16 @@ import { Decoder } from "src/protocol/decoder";
 //     client_id => STRING
 //   request_message => PARTITION_PRODUCE_REQUEST
 
-export interface PartitonRequestHeader {
+export interface PartitionRequestHeader {
   apiKey: PartitionApiKey;
   apiVersion: Int16;
   correlationId: Int32;
   clientId: String;
 }
 
-export const encodePartitonRequestHeader = (
+export const encodePartitionRequestHeader = (
   encoder: Encoder,
-  header: PartitonRequestHeader
+  header: PartitionRequestHeader
 ) => {
   encoder.writeEnum(header.apiKey);
   encoder.writeInt16(header.apiVersion);
@@ -39,9 +41,9 @@ export const encodePartitonRequestHeader = (
   encoder.writeString(header.clientId);
 };
 
-export const decodePartitonRequestHeader = (
+export const decodePartitionRequestHeader = (
   decoder: Decoder
-): PartitonRequestHeader => {
+): PartitionRequestHeader => {
   return {
     apiKey: decoder.readEnum(validPartitionApiKey),
     apiVersion: decoder.readInt16(),
@@ -63,12 +65,12 @@ const validPartitionApiKey = generateEnumPredicate(PartitionApiKey);
 //   message_set => BYTES
 
 export interface PartitionProduceRequest {
-  acks: Int16;
+  acks: Acks;
   messageSetSize: Int32;
   messageSet: ArrayBuffer;
 }
 
-export const encodePartitonProduceRequest = (
+export const encodePartitionProduceRequest = (
   encoder: Encoder,
   request: PartitionProduceRequest
 ): ArrayBuffer => {
@@ -78,11 +80,11 @@ export const encodePartitonProduceRequest = (
   return encoder.buffer();
 };
 
-export const decodePartitonProduceRequest = (
+export const decodePartitionProduceRequest = (
   decoder: Decoder
 ): PartitionProduceRequest => {
   const request = {
-    acks: decoder.readInt16(),
+    acks: decoder.readEnum(validAcks),
     messageSetSize: decoder.readInt32(),
   };
   return {

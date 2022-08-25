@@ -1,6 +1,13 @@
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
-import { ErrorCode, Int16, Int32, Int64, String } from "src/protocol/common";
+import {
+  Acks,
+  ErrorCode,
+  Int32,
+  Int64,
+  String,
+  validAcks,
+} from "src/protocol/common";
 
 // Produce Request (Version: 0) => acks timeout_ms [topic_data]
 //   acks => INT16
@@ -21,14 +28,14 @@ import { ErrorCode, Int16, Int32, Int64, String } from "src/protocol/common";
 // Here we follow the older description of message set (now called record batch).
 
 export interface ProduceRequest {
-  acks: Int16;
+  acks: Acks;
   timeoutMs: Int32;
   topics: Array<TopicData>;
 }
 
 export const decodeProduceRequest = (decoder: Decoder): ProduceRequest => {
   return {
-    acks: decoder.readInt16(),
+    acks: decoder.readEnum(validAcks),
     timeoutMs: decoder.readInt32(),
     topics: decoder.readArray(() => decodeTopicData(decoder)),
   };

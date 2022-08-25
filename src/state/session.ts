@@ -11,8 +11,8 @@ import { ApiKey, RequestMetadata, validApiKey } from "src/protocol/common";
 import { Decoder, KafkaRequestDecoder } from "src/protocol/decoder";
 import { Encoder, KafkaResponseEncoder } from "src/protocol/encoder";
 import {
-  encodePartitonProduceRequest,
-  encodePartitonRequestHeader,
+  encodePartitionProduceRequest,
+  encodePartitionRequestHeader,
   PartitionApiKey,
 } from "src/protocol/internal/partition";
 import { fetchClusterMetadata } from "src/state/cluster";
@@ -181,14 +181,14 @@ export class Session {
       request.topics.flatMap((topic) =>
         topic.partitions.map((partition) => {
           const encoder = new Encoder();
-          encodePartitonRequestHeader(encoder, {
+          encodePartitionRequestHeader(encoder, {
             apiKey: PartitionApiKey.Produce,
             apiVersion: 0,
             correlationId: metadata.correlationId,
             clientId: metadata.clientId,
           });
 
-          const partitionRequest = encodePartitonProduceRequest(encoder, {
+          const partitionRequest = encodePartitionProduceRequest(encoder, {
             acks: request.acks,
             messageSetSize: partition.messageSetSize,
             messageSet: partition.messageSet,

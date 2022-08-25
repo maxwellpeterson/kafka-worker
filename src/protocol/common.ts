@@ -39,3 +39,12 @@ export const ErrorCode = {
 } as const;
 export type ErrorCode = ValueOf<typeof ErrorCode>;
 export const validErrorCode = generateEnumPredicate(ErrorCode);
+
+// Acks is an Int16
+export const Acks = {
+  None: 0,
+  Leader: 1,
+  FullISR: -1,
+} as const;
+export type Acks = ValueOf<typeof Acks>;
+export const validAcks = generateEnumPredicate(Acks);
