@@ -9,26 +9,28 @@ export const int16Size = 2;
 export const int32Size = 4;
 export const int64Size = 8;
 
-export type KafkaString = string | null;
+export type String = string;
 export type KafkaArray<T> = T[] | null;
 
-export const cleanKafkaStringArray = (
-  strs: KafkaArray<KafkaString>
-): string[] => {
-  if (strs === null) {
-    return [];
-  }
-  return strs.filter((str): str is string => str !== null);
-};
+export interface RequestMetadata {
+  apiVersion: Int16;
+  correlationId: Int32;
+  clientId: String;
+}
+export const generateEnumPredicate =
+  <E extends Record<string, V>, V>(enumObj: E) =>
+  (value: V): value is ValueOf<E> =>
+    Object.values<V>(enumObj).includes(value);
 
 // ApiKey is an Int16
 export const ApiKey = {
   Produce: 0,
-  Fetch: 1,
-  ListOffsets: 2,
+  // Fetch: 1,
+  // ListOffsets: 2,
   Metadata: 3,
 } as const;
 export type ApiKey = ValueOf<typeof ApiKey>;
+export const validApiKey = generateEnumPredicate(ApiKey);
 
 // ErrorCode is an Int16
 export const ErrorCode = {
@@ -36,3 +38,4 @@ export const ErrorCode = {
   UnknownTopicOrPartition: 3,
 } as const;
 export type ErrorCode = ValueOf<typeof ErrorCode>;
+export const validErrorCode = generateEnumPredicate(ErrorCode);

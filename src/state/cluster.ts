@@ -20,7 +20,6 @@ export const fetchClusterMetadata = async (
   const obj = env.CLUSTER.get(id);
 
   const request = new Request(
-    // Note: Fake url scheme must be http or https?
     `https://cluster.state/metadata?${searchParam}=${topics.join(sep)}`
   );
   const response = await obj.fetch(request);

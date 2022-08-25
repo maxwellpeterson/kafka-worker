@@ -2,6 +2,7 @@ import { Env } from "src/common";
 
 export { Session } from "src/state/session";
 export { Cluster } from "src/state/cluster";
+export { Partition } from "src/state/partition";
 
 export default {
   async fetch(

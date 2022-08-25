@@ -1,13 +1,6 @@
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
-import {
-  ErrorCode,
-  Int16,
-  Int32,
-  Int64,
-  KafkaArray,
-  KafkaString,
-} from "src/protocol/common";
+import { ErrorCode, Int16, Int32, Int64, String } from "src/protocol/common";
 
 // Produce Request (Version: 0) => acks timeout_ms [topic_data]
 //   acks => INT16
@@ -30,7 +23,7 @@ import {
 export interface ProduceRequest {
   acks: Int16;
   timeoutMs: Int32;
-  topics: KafkaArray<TopicData>;
+  topics: Array<TopicData>;
 }
 
 export const decodeProduceRequest = (decoder: Decoder): ProduceRequest => {
@@ -42,8 +35,8 @@ export const decodeProduceRequest = (decoder: Decoder): ProduceRequest => {
 };
 
 export interface TopicData {
-  name: KafkaString;
-  partitions: KafkaArray<PartitionData>;
+  name: String;
+  partitions: Array<PartitionData>;
 }
 
 const decodeTopicData = (decoder: Decoder): TopicData => {
@@ -78,25 +71,22 @@ const decodePartitionData = (decoder: Decoder): PartitionData => {
 // https://kafka.apache.org/protocol.html#The_Messages_Produce
 
 export interface ProduceResponse {
-  topics: KafkaArray<TopicResponse>;
+  topics: Array<TopicResponse>;
 }
 
 export const encodeProduceResponse = (
   encoder: Encoder,
-  response: ProduceResponse | null
+  response: ProduceResponse
 ): ArrayBuffer | null => {
-  if (response === null) {
-    return null;
-  }
   encoder.writeArray(response.topics, (topic) =>
     encodeTopicResponse(encoder, topic)
   );
-  return encoder.sizedBuffer();
+  return encoder.buffer();
 };
 
 export interface TopicResponse {
-  name: KafkaString;
-  partitions: KafkaArray<PartitionResponse>;
+  name: String;
+  partitions: Array<PartitionResponse>;
 }
 
 const encodeTopicResponse = (encoder: Encoder, topic: TopicResponse) => {
@@ -117,6 +107,6 @@ const encodePartitionResponse = (
   partition: PartitionResponse
 ) => {
   encoder.writeInt32(partition.index);
-  encoder.writeErrorCode(partition.errorCode);
+  encoder.writeEnum(partition.errorCode);
   encoder.writeInt64(partition.baseOffset);
 };

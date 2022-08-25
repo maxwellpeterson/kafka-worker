@@ -1,6 +1,6 @@
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
-import { Int32, KafkaString, KafkaArray, ErrorCode } from "src/protocol/common";
+import { Int32, String, ErrorCode } from "src/protocol/common";
 
 // Metadata Request (Version: 0) => [topics]
 //   topics => name
@@ -9,7 +9,7 @@ import { Int32, KafkaString, KafkaArray, ErrorCode } from "src/protocol/common";
 // https://kafka.apache.org/protocol.html#The_Messages_Metadata
 
 export interface MetadataRequest {
-  topics: KafkaArray<KafkaString>;
+  topics: Array<String>;
 }
 
 export const decodeMetadataRequest = (decoder: Decoder): MetadataRequest => {
@@ -34,8 +34,8 @@ export const decodeMetadataRequest = (decoder: Decoder): MetadataRequest => {
 // https://kafka.apache.org/protocol.html#The_Messages_Metadata
 
 export interface MetadataResponse {
-  brokers: KafkaArray<Broker>;
-  topics: KafkaArray<TopicMetadata>;
+  brokers: Array<Broker>;
+  topics: Array<TopicMetadata>;
 }
 
 export const encodeMetadataResponse = (
@@ -48,12 +48,12 @@ export const encodeMetadataResponse = (
   encoder.writeArray(response.topics, (metadata) =>
     encodeTopicMetadata(encoder, metadata)
   );
-  return encoder.sizedBuffer();
+  return encoder.buffer();
 };
 
 export interface Broker {
   nodeId: Int32;
-  host: KafkaString;
+  host: String;
   port: Int32;
 }
 
@@ -65,12 +65,12 @@ const encodeBroker = (encoder: Encoder, broker: Broker) => {
 
 export interface TopicMetadata {
   errorCode: ErrorCode;
-  name: KafkaString;
-  partitions: KafkaArray<PartitionMetadata>;
+  name: String;
+  partitions: Array<PartitionMetadata>;
 }
 
 const encodeTopicMetadata = (encoder: Encoder, metadata: TopicMetadata) => {
-  encoder.writeErrorCode(metadata.errorCode);
+  encoder.writeEnum(metadata.errorCode);
   encoder.writeString(metadata.name);
   encoder.writeArray(metadata.partitions, (metadata) =>
     encodePartitionMetadata(encoder, metadata)
@@ -81,15 +81,15 @@ export interface PartitionMetadata {
   errorCode: ErrorCode;
   partitionIndex: Int32;
   leaderId: Int32;
-  replicaNodes: KafkaArray<Int32>;
-  isrNodes: KafkaArray<Int32>;
+  replicaNodes: Array<Int32>;
+  isrNodes: Array<Int32>;
 }
 
 const encodePartitionMetadata = (
   encoder: Encoder,
   metadata: PartitionMetadata
 ) => {
-  encoder.writeErrorCode(metadata.errorCode);
+  encoder.writeEnum(metadata.errorCode);
   encoder.writeInt32(metadata.partitionIndex);
   encoder.writeInt32(metadata.leaderId);
   encoder.writeArray(metadata.replicaNodes, (replica) =>

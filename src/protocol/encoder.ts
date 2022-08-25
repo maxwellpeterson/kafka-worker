@@ -3,23 +3,21 @@ import {
   Int32,
   int16Size,
   int32Size,
-  KafkaString,
+  String,
   KafkaArray,
   ErrorCode,
   Int64,
   int64Size,
 } from "src/protocol/common";
 
-const initialBufferSize = 64;
-
 export class Encoder {
-  private view: DataView;
-  private offset: number;
+  protected view: DataView;
+  protected offset: number;
 
-  constructor() {
+  constructor(initialBufferSize = 64) {
     const buffer = new ArrayBuffer(initialBufferSize);
     this.view = new DataView(buffer);
-    this.offset = int32Size;
+    this.offset = 0;
   }
 
   private checkCapacity(size: number) {
@@ -27,7 +25,6 @@ export class Encoder {
     if (nextLength > this.view.byteLength) {
       const newCapacity = 2 * nextLength;
       const newBuffer = new ArrayBuffer(newCapacity);
-      // Reserved header space is preserved after copy
       new Uint8Array(newBuffer).set(new Uint8Array(this.view.buffer));
       this.view = new DataView(newBuffer);
     }
@@ -39,8 +36,8 @@ export class Encoder {
     this.offset += int16Size;
   }
 
-  writeErrorCode(errorCode: ErrorCode) {
-    this.writeInt16(errorCode);
+  writeEnum<T extends Int16>(value: T) {
+    this.writeInt16(value);
   }
 
   writeInt32(value: Int32) {
@@ -49,17 +46,13 @@ export class Encoder {
     this.offset += int32Size;
   }
 
-  writeInt64(value: bigint) {
+  writeInt64(value: Int64) {
     this.checkCapacity(int64Size);
     this.view.setBigInt64(this.offset, value);
     this.offset += int64Size;
   }
 
-  writeString(value: KafkaString) {
-    if (value === null) {
-      this.writeInt16(-1);
-      return;
-    }
+  writeString(value: String) {
     const bytes = new TextEncoder().encode(value);
     this.writeInt16(bytes.length);
     this.checkCapacity(bytes.length);
@@ -76,9 +69,29 @@ export class Encoder {
     values.forEach(writeElement);
   }
 
-  sizedBuffer(): ArrayBuffer {
-    // Write size header to reserved space at the front of the array
-    this.view.setInt32(0, this.offset - int32Size);
+  writeMessageSet(buffer: ArrayBuffer) {
+    this.checkCapacity(buffer.byteLength);
+    new Uint8Array(this.view.buffer).set(new Uint8Array(buffer), this.offset);
+    this.offset += buffer.byteLength;
+  }
+
+  buffer(): ArrayBuffer {
     return this.view.buffer.slice(0, this.offset);
+  }
+}
+
+export class KafkaResponseEncoder extends Encoder {
+  constructor(correlationId: Int32, initialBufferSize = 64) {
+    super(initialBufferSize + 2 * int32Size);
+    // Reserve space for size header at front of buffer
+    this.offset += int32Size;
+    this.writeInt32(correlationId);
+  }
+
+  // Overrides parent method, adds size header to buffer
+  buffer(): ArrayBuffer {
+    // Write size header to reserved space at front of buffer
+    this.view.setInt32(0, this.offset - int32Size);
+    return super.buffer();
   }
 }
