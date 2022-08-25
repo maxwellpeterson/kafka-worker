@@ -13,6 +13,7 @@ import {
   encodePartitionProduceResponse,
   encodePartitionRequestHeader,
 } from "src/protocol/internal/partition";
+import { fillBuffer } from "src/protocol/test-utils";
 
 describe("PartitionRequestHeader", () => {
   type TestCase = [string, PartitionRequestHeader];
@@ -58,15 +59,6 @@ describe("PartitionRequestHeader", () => {
   });
 });
 
-const fillArrayBuffer = (length: number): ArrayBuffer => {
-  const buffer = new ArrayBuffer(length);
-  const view = new DataView(buffer);
-  for (let i = 0; i < length; i++) {
-    view.setInt8(i, i);
-  }
-  return buffer;
-};
-
 describe("PartitionProduceRequest", () => {
   type TestCase = [string, PartitionProduceRequest];
   const cases: TestCase[] = [
@@ -75,7 +67,7 @@ describe("PartitionProduceRequest", () => {
       {
         acks: Acks.Leader,
         messageSetSize: 64,
-        messageSet: fillArrayBuffer(64),
+        messageSet: fillBuffer(64),
       },
     ],
     [
@@ -83,7 +75,7 @@ describe("PartitionProduceRequest", () => {
       {
         acks: Acks.None,
         messageSetSize: 100,
-        messageSet: fillArrayBuffer(100),
+        messageSet: fillBuffer(100),
       },
     ],
     [
@@ -91,7 +83,7 @@ describe("PartitionProduceRequest", () => {
       {
         acks: Acks.FullISR,
         messageSetSize: 37,
-        messageSet: fillArrayBuffer(37),
+        messageSet: fillBuffer(37),
       },
     ],
     [
