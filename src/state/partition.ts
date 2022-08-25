@@ -11,7 +11,7 @@ export class Partition {
     this.env = env;
   }
 
-  async fetch(request: Request): Promise<Response> {
+  fetch(request: Request): Response {
     return new Response();
   }
 }

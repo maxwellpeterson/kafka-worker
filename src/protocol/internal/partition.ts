@@ -6,7 +6,6 @@ import {
   Int16,
   Int32,
   Int64,
-  String,
   validAcks,
   validErrorCode,
 } from "src/protocol/common";
@@ -28,7 +27,7 @@ export interface PartitionRequestHeader {
   apiKey: PartitionApiKey;
   apiVersion: Int16;
   correlationId: Int32;
-  clientId: String;
+  clientId: string;
 }
 
 export const encodePartitionRequestHeader = (

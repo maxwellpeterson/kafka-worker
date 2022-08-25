@@ -100,7 +100,7 @@ export class Session {
     };
   }
 
-  async fetch(request: Request): Promise<Response> {
+  fetch(request: Request): Response {
     const upgradeHeader = request.headers.get("Upgrade");
     if (!upgradeHeader || upgradeHeader !== "websocket") {
       return new Response("Expected Upgrade: websocket", { status: 426 });
@@ -118,8 +118,8 @@ export class Session {
         return;
       }
 
-      this.handleRequest(event.data).catch((error) =>
-        console.log(`Error while handling request: ${error}`)
+      this.handleRequest(event.data).catch((error: Error) =>
+        console.log(`Error while handling request: ${error.message}`)
       );
     });
 

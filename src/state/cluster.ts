@@ -45,13 +45,6 @@ export class Cluster {
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
-    this.state.blockConcurrencyWhile(
-      async () =>
-        await this.state.storage.put<TopicState>(
-          topicStateKey,
-          initialTopicState
-        )
-    );
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -63,10 +56,9 @@ export class Cluster {
     }
 
     const topicNames = topicQuery === "" ? [] : topicQuery.split(",");
-    const state = await this.state.storage.get<TopicState>(topicStateKey);
-    if (state === undefined) {
-      return new Response("Couldn't load topic state", { status: 500 });
-    }
+    const state =
+      (await this.state.storage.get<TopicState>(topicStateKey)) ??
+      initialTopicState;
 
     const brokers = [{ ...globalBroker, host: this.env.HOSTNAME }];
 

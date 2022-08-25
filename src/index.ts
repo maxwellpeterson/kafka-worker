@@ -5,11 +5,7 @@ export { Cluster } from "src/state/cluster";
 export { Partition } from "src/state/partition";
 
 export default {
-  async fetch(
-    request: Request,
-    env: Env,
-    ctx: ExecutionContext
-  ): Promise<Response> {
+  async fetch(request: Request, env: Env): Promise<Response> {
     const id = env.SESSION.newUniqueId();
     const obj = env.SESSION.get(id);
     return await obj.fetch(request);

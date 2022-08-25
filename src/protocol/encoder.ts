@@ -3,9 +3,7 @@ import {
   Int32,
   int16Size,
   int32Size,
-  String,
   KafkaArray,
-  ErrorCode,
   Int64,
   int64Size,
 } from "src/protocol/common";
@@ -52,7 +50,7 @@ export class Encoder {
     this.offset += int64Size;
   }
 
-  writeString(value: String) {
+  writeString(value: string) {
     const bytes = new TextEncoder().encode(value);
     this.writeInt16(bytes.length);
     this.checkCapacity(bytes.length);

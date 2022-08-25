@@ -3,10 +3,7 @@ import {
   Int32,
   int16Size,
   int32Size,
-  String,
   KafkaArray,
-  ErrorCode,
-  validErrorCode,
   Int64,
   int64Size,
 } from "src/protocol/common";
@@ -46,7 +43,7 @@ export class Decoder {
     return value;
   }
 
-  readString(): String {
+  readString(): string {
     const size = this.readInt16();
     if (size === -1) {
       // I don't think this should ever happen...
@@ -76,7 +73,7 @@ export class Decoder {
   // In several apis, there is no semantic difference between empty and null
   // arrays, and converting null arrays to empty arrays eliminates unnecessary
   // code pollution from null checking
-  readArray<T>(readElement: (index: number) => T): Array<T> {
+  readArray<T>(readElement: (index: number) => T): T[] {
     return this.readKafkaArray(readElement) ?? [];
   }
 

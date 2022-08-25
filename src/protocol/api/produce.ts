@@ -1,13 +1,6 @@
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
-import {
-  Acks,
-  ErrorCode,
-  Int32,
-  Int64,
-  String,
-  validAcks,
-} from "src/protocol/common";
+import { Acks, ErrorCode, Int32, Int64, validAcks } from "src/protocol/common";
 
 // Produce Request (Version: 0) => acks timeout_ms [topic_data]
 //   acks => INT16
@@ -30,7 +23,7 @@ import {
 export interface ProduceRequest {
   acks: Acks;
   timeoutMs: Int32;
-  topics: Array<TopicData>;
+  topics: TopicData[];
 }
 
 export const decodeProduceRequest = (decoder: Decoder): ProduceRequest => {
@@ -42,8 +35,8 @@ export const decodeProduceRequest = (decoder: Decoder): ProduceRequest => {
 };
 
 export interface TopicData {
-  name: String;
-  partitions: Array<PartitionData>;
+  name: string;
+  partitions: PartitionData[];
 }
 
 const decodeTopicData = (decoder: Decoder): TopicData => {
@@ -78,7 +71,7 @@ const decodePartitionData = (decoder: Decoder): PartitionData => {
 // https://kafka.apache.org/protocol.html#The_Messages_Produce
 
 export interface ProduceResponse {
-  topics: Array<TopicResponse>;
+  topics: TopicResponse[];
 }
 
 export const encodeProduceResponse = (
@@ -92,8 +85,8 @@ export const encodeProduceResponse = (
 };
 
 export interface TopicResponse {
-  name: String;
-  partitions: Array<PartitionResponse>;
+  name: string;
+  partitions: PartitionResponse[];
 }
 
 const encodeTopicResponse = (encoder: Encoder, topic: TopicResponse) => {

@@ -1,6 +1,6 @@
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
-import { Int32, String, ErrorCode } from "src/protocol/common";
+import { Int32, ErrorCode } from "src/protocol/common";
 
 // Metadata Request (Version: 0) => [topics]
 //   topics => name
@@ -9,7 +9,7 @@ import { Int32, String, ErrorCode } from "src/protocol/common";
 // https://kafka.apache.org/protocol.html#The_Messages_Metadata
 
 export interface MetadataRequest {
-  topics: Array<String>;
+  topics: string[];
 }
 
 export const decodeMetadataRequest = (decoder: Decoder): MetadataRequest => {
@@ -34,8 +34,8 @@ export const decodeMetadataRequest = (decoder: Decoder): MetadataRequest => {
 // https://kafka.apache.org/protocol.html#The_Messages_Metadata
 
 export interface MetadataResponse {
-  brokers: Array<Broker>;
-  topics: Array<TopicMetadata>;
+  brokers: Broker[];
+  topics: TopicMetadata[];
 }
 
 export const encodeMetadataResponse = (
@@ -53,7 +53,7 @@ export const encodeMetadataResponse = (
 
 export interface Broker {
   nodeId: Int32;
-  host: String;
+  host: string;
   port: Int32;
 }
 
@@ -65,8 +65,8 @@ const encodeBroker = (encoder: Encoder, broker: Broker) => {
 
 export interface TopicMetadata {
   errorCode: ErrorCode;
-  name: String;
-  partitions: Array<PartitionMetadata>;
+  name: string;
+  partitions: PartitionMetadata[];
 }
 
 const encodeTopicMetadata = (encoder: Encoder, metadata: TopicMetadata) => {
@@ -81,8 +81,8 @@ export interface PartitionMetadata {
   errorCode: ErrorCode;
   partitionIndex: Int32;
   leaderId: Int32;
-  replicaNodes: Array<Int32>;
-  isrNodes: Array<Int32>;
+  replicaNodes: Int32[];
+  isrNodes: Int32[];
 }
 
 const encodePartitionMetadata = (

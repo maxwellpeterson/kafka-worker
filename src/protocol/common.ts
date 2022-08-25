@@ -9,13 +9,12 @@ export const int16Size = 2;
 export const int32Size = 4;
 export const int64Size = 8;
 
-export type String = string;
 export type KafkaArray<T> = T[] | null;
 
 export interface RequestMetadata {
   apiVersion: Int16;
   correlationId: Int32;
-  clientId: String;
+  clientId: string;
 }
 export const generateEnumPredicate =
   <E extends Record<string, V>, V>(enumObj: E) =>
