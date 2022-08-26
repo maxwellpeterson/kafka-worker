@@ -52,14 +52,14 @@ export class Partition {
   }
 }
 
-export type PartitionId = string;
+export class PartitionInfo {
+  readonly topic: string;
+  readonly index: number;
+  readonly id: string;
 
-export const generatePartitonId = (topic: string, index: Int32): PartitionId =>
-  `${topic}-${index}`;
-
-export const parsePartitionId = (
-  id: PartitionId
-): { topic: string; index: Int32 } => {
-  const sep = id.lastIndexOf("-");
-  return { topic: id.slice(0, sep), index: parseInt(id.slice(sep + 1)) };
-};
+  constructor(topic: string, index: number) {
+    this.topic = topic;
+    this.index = index;
+    this.id = `${topic}-${index}`;
+  }
+}

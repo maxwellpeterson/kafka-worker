@@ -13,20 +13,20 @@ import { Encoder, KafkaResponseEncoder } from "src/protocol/encoder";
 import { fetchClusterMetadata } from "src/state/cluster";
 import { RequestManager } from "src/state/request-manager";
 
-// Coordinator object that manages a client connection and forwards requests to
-// partition objects and the global cluster object. Lives as long as the client
-// connection, with no persistent state
+// Coordinator object that handles one client connection and forwards incoming
+// requests to partition objects and the global cluster object. Lives as long as
+// the client connection, with no persistent state
 export class Session {
   private readonly state: DurableObjectState;
   private readonly env: Env;
 
-  private readonly manager: RequestManager;
+  private readonly internal: RequestManager;
 
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
 
-    this.manager = new RequestManager(env);
+    this.internal = new RequestManager(env);
   }
 
   fetch(request: Request): Response {
@@ -99,10 +99,7 @@ export class Session {
       `[Session DO] Produce request: ${JSON.stringify(request, null, 2)}`
     );
 
-    const response = await this.manager.internalProduceRequest(
-      metadata,
-      request
-    );
+    const response = await this.internal.produceRequest(metadata, request);
 
     console.log(
       `[Session DO] Produce response: ${JSON.stringify(
