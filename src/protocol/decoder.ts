@@ -79,7 +79,7 @@ export class Decoder {
     return this.readKafkaArray(readElement) ?? [];
   }
 
-  readMessageSet(size: Int32): ArrayBuffer {
+  readBuffer(size: Int32): ArrayBuffer {
     const buffer = this.view.buffer.slice(this.offset, this.offset + size);
     this.offset += size;
     return buffer;

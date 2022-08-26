@@ -1,6 +1,6 @@
 import { Env } from "src/common";
 import { ProduceRequest, ProduceResponse } from "src/protocol/api/produce";
-import { RequestMetadata } from "src/protocol/common";
+import { Acks, RequestMetadata } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import {
@@ -43,7 +43,7 @@ export class RequestManager {
     request: ProduceRequest
   ): Promise<ProduceResponse | null> {
     return new Promise<ProduceResponse | null>((resolve, reject) => {
-      if (request.acks !== 0) {
+      if (request.acks !== Acks.None) {
         // If the request will return a response, resolve the promise when the
         // response is complete
         const done = (response: ProduceResponse) => {
@@ -81,7 +81,7 @@ export class RequestManager {
         )
       )
         .then(() => {
-          if (request.acks === 0) {
+          if (request.acks === Acks.None) {
             // If the request will not return a response, resolve the promise as
             // soon as the subrequests are sent
             resolve(null);

@@ -75,7 +75,7 @@ export const encodePartitionProduceRequest = (
 ): ArrayBuffer => {
   encoder.writeInt16(request.acks);
   encoder.writeInt32(request.messageSetSize);
-  encoder.writeMessageSet(request.messageSet);
+  encoder.writeBuffer(request.messageSet);
   return encoder.buffer();
 };
 
@@ -88,7 +88,7 @@ export const decodePartitionProduceRequest = (
   };
   return {
     ...request,
-    messageSet: decoder.readMessageSet(request.messageSetSize),
+    messageSet: decoder.readBuffer(request.messageSetSize),
   };
 };
 

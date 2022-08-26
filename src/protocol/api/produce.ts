@@ -57,7 +57,7 @@ const decodePartitionData = (decoder: Decoder): PartitionData => {
     index: decoder.readInt32(),
     messageSetSize: decoder.readInt32(),
   };
-  return { ...data, messageSet: decoder.readMessageSet(data.messageSetSize) };
+  return { ...data, messageSet: decoder.readBuffer(data.messageSetSize) };
 };
 
 // Produce Response (Version: 0) => [responses]

@@ -72,7 +72,7 @@ export class Encoder {
     values.forEach(writeElement);
   }
 
-  writeMessageSet(buffer: ArrayBuffer) {
+  writeBuffer(buffer: ArrayBuffer) {
     this.checkCapacity(buffer.byteLength);
     new Uint8Array(this.view.buffer).set(new Uint8Array(buffer), this.offset);
     this.offset += buffer.byteLength;
