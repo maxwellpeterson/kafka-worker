@@ -13,7 +13,7 @@ interface BaseResponse {
 export type DoneHandler<T> = (response: T) => void;
 type PartitionId = string;
 
-type PartitionResponse<T extends BaseResponse> = Omit<
+export type PartitionResponse<T extends BaseResponse> = Omit<
   ElemOf<ElemOf<T["topics"]>["partitions"]>,
   "index"
 >;
@@ -50,6 +50,9 @@ export class IncrementalResponse<T extends BaseResponse> {
       )
     );
     this.pendingPartitions = new Set<PartitionId>(partitionIds);
+
+    // Make sure we don't block forever if the template response is already complete
+    this.checkDone();
   }
 
   addPartition(partition: PartitionInfo, response: PartitionResponse<T>) {
@@ -68,13 +71,16 @@ export class IncrementalResponse<T extends BaseResponse> {
       return;
     }
 
-    // Fill in the matching placeholder with the actual subresponse, and remove
-    // the partition from the pending set
+    // Fill in the matching placeholder with the actual subresponse, remove
+    // the partition from the pending set, and check if this was the last one
     Object.assign(stubResponse, { ...response, index: partition.index });
     this.pendingPartitions.delete(partition.id);
+    this.checkDone();
+  }
 
-    // If all partitions are settled (this was the last one), then the response
-    // is complete. Done cannot be called again since the pending set is empty
+  private checkDone() {
+    // If all partitions are settled, then the response is complete. Done cannot
+    // be called again because the pending set only decreases in size over time
     if (this.pendingPartitions.size === 0) {
       this.done(this.response);
     }

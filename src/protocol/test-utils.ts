@@ -22,3 +22,6 @@ export const fillBuffer = (length: number): ArrayBuffer => {
   }
   return buffer;
 };
+
+// I should upgrade to Node 17+ to get structuredClone()
+export const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;

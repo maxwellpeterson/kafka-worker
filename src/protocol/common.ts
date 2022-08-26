@@ -43,6 +43,7 @@ export const validApiKey = generateEnumPredicate(ApiKey);
 // ErrorCode is an Int16
 export const ErrorCode = {
   None: 0,
+  CorruptMessage: 2,
   UnknownTopicOrPartition: 3,
 } as const;
 export type ErrorCode = ValueOf<typeof ErrorCode>;
