@@ -10,7 +10,7 @@ interface BaseResponse {
   }[];
 }
 
-type DoneHandler<T> = (response: T) => void;
+export type DoneHandler<T> = (response: T) => void;
 type PartitionId = string;
 
 type PartitionResponse<T extends BaseResponse> = Omit<
@@ -42,25 +42,23 @@ export class IncrementalResponse<T extends BaseResponse> {
       return;
     }
 
-    const topic = this.response.topics.find(
-      (topic) => topic.name === partition.topic
-    );
-    if (topic === undefined) {
+    // Find the placeholder response that we want to fill in
+    const stubResponse = this.response.topics
+      .find((topic) => topic.name === partition.topic)
+      ?.partitions.find(({ index }) => index === partition.index);
+
+    if (stubResponse === undefined) {
       // This should be an unreachable state
       return;
     }
 
-    const target = topic.partitions.findIndex(
-      ({ index }) => index === partition.index
-    );
-    if (target === -1) {
-      // This should be an unreachable state
-      return;
-    }
-
-    topic.partitions[target] = { ...response, index: partition.index };
+    // Fill in the matching placeholder with the actual response, and remove the
+    // partition from the pending set
+    Object.assign(stubResponse, { ...response, index: partition.index });
     this.pendingPartitions.delete(partition.id);
 
+    // If all partitions are settled (this was the last one), then the response
+    // is complete. Done cannot be called again since the pending set is empty
     if (this.pendingPartitions.size === 0) {
       this.done(this.response);
     }
