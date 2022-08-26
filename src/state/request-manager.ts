@@ -1,6 +1,6 @@
 import { Env } from "src/common";
 import { ProduceRequest, ProduceResponse } from "src/protocol/api/produce";
-import { RequestMetadata } from "src/protocol/common";
+import { ErrorCode, RequestMetadata } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import {
@@ -11,6 +11,7 @@ import {
 } from "src/protocol/internal/partition";
 import { PartitionInfo } from "src/state/partition";
 import { SocketManager } from "src/state/socket-manager";
+import { IncrementalResponse } from "./pending-request";
 
 // TODO: One ProduceRequest can correspond to multiple
 // PartititionProduceRequests, and therefore multiple PartitionProduceResponses.
@@ -32,16 +33,10 @@ import { SocketManager } from "src/state/socket-manager";
 // request array, but the same approach should work)
 interface RequestState {
   produce: {
-    pending: Map<CorrelationId, ProduceRequestState>;
+    pending: Map<CorrelationId, IncrementalResponse<ProduceResponse>>;
   };
 }
 type CorrelationId = number;
-interface ProduceRequestState {
-  response: ProduceResponse;
-  pendingPartitions: Set<PartitionId>;
-  done: () => void;
-}
-type PartitionId = string;
 
 export class RequestManager {
   private readonly env: Env;
@@ -53,7 +48,9 @@ export class RequestManager {
     this.env = env;
 
     this.requests = {
-      produce: { pending: new Map<CorrelationId, ProduceRequestState>() },
+      produce: {
+        pending: new Map<CorrelationId, IncrementalResponse<ProduceResponse>>(),
+      },
     };
     this.socket = new SocketManager(env, this);
   }
@@ -66,25 +63,23 @@ export class RequestManager {
     const stubResponse: ProduceResponse = {
       topics: request.topics.map((topic) => ({
         name: topic.name,
-        partitions: [],
+        partitions: topic.partitions.map((partition) => ({
+          index: partition.index,
+          errorCode: ErrorCode.None,
+          baseOffset: BigInt(0),
+        })),
       })),
     };
 
-    const partitions = request.topics.flatMap((topic) =>
-      topic.partitions.map(
-        (partition) => new PartitionInfo(topic.name, partition.index).id
-      )
-    );
-
     return new Promise<ProduceResponse | null>((resolve, reject) => {
-      this.requests.produce.pending.set(metadata.correlationId, {
-        response: stubResponse,
-        pendingPartitions: new Set(partitions),
-        done: () => {
-          this.requests.produce.pending.delete(metadata.correlationId);
-          resolve(stubResponse);
-        },
-      });
+      const done = (response: ProduceResponse) => {
+        this.requests.produce.pending.delete(metadata.correlationId);
+        resolve(response);
+      };
+      this.requests.produce.pending.set(
+        metadata.correlationId,
+        new IncrementalResponse(stubResponse, done)
+      );
 
       Promise.all(
         request.topics.flatMap((topic) =>
@@ -117,9 +112,9 @@ export class RequestManager {
     const decoder = new Decoder(message);
     const correlationId = decoder.readInt32();
 
-    const produceRequest = this.requests.produce.pending.get(correlationId);
-    if (produceRequest !== undefined) {
-      this.handlePartitionProduceResponse(produceRequest, partition, decoder);
+    const request = this.requests.produce.pending.get(correlationId);
+    if (request !== undefined) {
+      this.handlePartitionProduceResponse(request, partition, decoder);
       return;
     }
 
@@ -131,26 +126,22 @@ export class RequestManager {
     partition: PartitionInfo,
     decoder: Decoder
   ) {
-    if (!clientRequest.pendingPartitions.has(partition.id)) {
-      console.log("Received Partition response from non-pending partition");
-      return;
-    }
-
-    const response = decodePartitionProduceResponse(decoder);
-    const topic = clientRequest.response.topics.find(
-      (topic) => topic.name === partition.topic
-    );
-
-    if (topic === undefined) {
-      // This should be an unreachable state
-      return;
-    }
-
-    topic.partitions.push({ ...response, index: partition.index });
-    clientRequest.pendingPartitions.delete(partition.id);
-
-    if (clientRequest.pendingPartitions.size === 0) {
-      clientRequest.done();
-    }
+    // if (!clientRequest.pendingPartitions.has(partition.id)) {
+    //   console.log("Received Partition response from non-pending partition");
+    //   return;
+    // }
+    // const response = decodePartitionProduceResponse(decoder);
+    // const topic = clientRequest.response.topics.find(
+    //   (topic) => topic.name === partition.topic
+    // );
+    // if (topic === undefined) {
+    //   // This should be an unreachable state
+    //   return;
+    // }
+    // topic.partitions.push({ ...response, index: partition.index });
+    // clientRequest.pendingPartitions.delete(partition.id);
+    // if (clientRequest.pendingPartitions.size === 0) {
+    //   clientRequest.done();
+    // }
   }
 }

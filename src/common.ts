@@ -14,3 +14,4 @@ export type Env = Readonly<{
 }>;
 
 export type ValueOf<T> = T[keyof T];
+export type ElemOf<T extends E[], E = T[number]> = E;
