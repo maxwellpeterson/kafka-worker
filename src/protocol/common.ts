@@ -16,6 +16,7 @@ export interface RequestMetadata {
   correlationId: Int32;
   clientId: string;
 }
+
 export const generateEnumPredicate =
   <E extends Record<string, V>, V>(enumObj: E) =>
   (value: V): value is ValueOf<E> =>

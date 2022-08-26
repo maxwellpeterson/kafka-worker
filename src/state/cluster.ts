@@ -6,7 +6,6 @@ const globalClusterName = "global";
 const globalBroker = {
   // This is a made up number
   nodeId: 333,
-  port: 443,
 };
 
 const searchParam = "topics";
@@ -60,7 +59,13 @@ export class Cluster {
       (await this.state.storage.get<TopicState>(topicStateKey)) ??
       initialTopicState;
 
-    const brokers = [{ ...globalBroker, host: this.env.HOSTNAME }];
+    const brokers = [
+      {
+        ...globalBroker,
+        host: this.env.HOSTNAME,
+        port: parseInt(this.env.PORT),
+      },
+    ];
 
     // Empty list means return metadata for all topics
     if (topicNames.length === 0) {

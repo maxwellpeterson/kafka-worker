@@ -3,7 +3,8 @@ main = "src/index.ts"
 compatibility_date = "2022-08-21"
 
 [vars]
-HOSTNAME="kafka-worker.archmap.workers.dev"
+HOSTNAME="localhost"
+PORT="8787"
 
 [durable_objects]
 bindings = [

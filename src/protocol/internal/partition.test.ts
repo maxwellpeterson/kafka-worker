@@ -110,8 +110,11 @@ describe("PartitionProduceRequest", () => {
 describe("PartitionProduceResponse", () => {
   type TestCase = [string, PartitionProduceResponse];
   const cases: TestCase[] = [
-    ["baseline response", { errorCode: ErrorCode.None, offset: BigInt(127) }],
-    ["offset zero", { errorCode: ErrorCode.None, offset: BigInt(0) }],
+    [
+      "baseline response",
+      { errorCode: ErrorCode.None, baseOffset: BigInt(127) },
+    ],
+    ["offset zero", { errorCode: ErrorCode.None, baseOffset: BigInt(0) }],
   ];
 
   test.each(cases)("%s", (_name, response) => {

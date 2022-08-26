@@ -96,13 +96,13 @@ export const decodePartitionProduceRequest = (
 //   correlation_id => INT32
 //   response_message => PARTITION_PRODUCE_RESPONSE
 
-// Partition Produce Response (Version: 0) => error_code offset
+// Partition Produce Response (Version: 0) => error_code base_offset
 //   error_code => INT16
-//   offset => INT64
+//   base_offset => INT64
 
 export interface PartitionProduceResponse {
   errorCode: ErrorCode;
-  offset: Int64;
+  baseOffset: Int64;
 }
 
 export const encodePartitionProduceResponse = (
@@ -110,7 +110,7 @@ export const encodePartitionProduceResponse = (
   response: PartitionProduceResponse
 ): ArrayBuffer => {
   encoder.writeEnum(response.errorCode);
-  encoder.writeInt64(response.offset);
+  encoder.writeInt64(response.baseOffset);
   return encoder.buffer();
 };
 
@@ -119,6 +119,6 @@ export const decodePartitionProduceResponse = (
 ): PartitionProduceResponse => {
   return {
     errorCode: decoder.readEnum(validErrorCode),
-    offset: decoder.readInt64(),
+    baseOffset: decoder.readInt64(),
   };
 };

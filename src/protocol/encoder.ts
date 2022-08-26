@@ -93,3 +93,10 @@ export class KafkaResponseEncoder extends Encoder {
     return super.buffer();
   }
 }
+
+export class PartitionResponseEncoder extends Encoder {
+  constructor(correlationId: Int32, initialBufferSize = 64) {
+    super(initialBufferSize + int32Size);
+    this.writeInt32(correlationId);
+  }
+}

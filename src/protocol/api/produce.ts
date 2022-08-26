@@ -77,7 +77,7 @@ export interface ProduceResponse {
 export const encodeProduceResponse = (
   encoder: Encoder,
   response: ProduceResponse
-): ArrayBuffer | null => {
+): ArrayBuffer => {
   encoder.writeArray(response.topics, (topic) =>
     encodeTopicResponse(encoder, topic)
   );

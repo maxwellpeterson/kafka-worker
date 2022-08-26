@@ -1,6 +1,8 @@
 export type Env = Readonly<{
   // The hostname of this worker
   HOSTNAME: string;
+  // The port of this worker
+  PORT: string;
   SESSION: DurableObjectNamespace;
   CLUSTER: DurableObjectNamespace;
   PARTITION: DurableObjectNamespace;

@@ -6,23 +6,34 @@ import {
 import {
   ProduceResponse,
   decodeProduceRequest,
+  encodeProduceResponse,
 } from "src/protocol/api/produce";
-import { ApiKey, RequestMetadata, validApiKey } from "src/protocol/common";
+import {
+  ApiKey,
+  Int32,
+  RequestMetadata,
+  validApiKey,
+} from "src/protocol/common";
 import { Decoder, KafkaRequestDecoder } from "src/protocol/decoder";
 import { Encoder, KafkaResponseEncoder } from "src/protocol/encoder";
 import {
   PartitionApiKey,
+  decodePartitionProduceResponse,
   encodePartitionProduceRequest,
   encodePartitionRequestHeader,
 } from "src/protocol/internal/partition";
 import { fetchClusterMetadata } from "src/state/cluster";
-import { generatePartitonId, partitionStubUrl } from "src/state/partition";
+import {
+  PartitionId,
+  generatePartitonId,
+  parsePartitionId,
+  partitionStubUrl,
+} from "src/state/partition";
 
 interface PartitionState {
   active: Map<PartitionId, WebSocket>;
   pending: Map<PartitionId, Promise<WebSocket>>;
 }
-type PartitionId = string;
 
 // TODO: One ProduceRequest can correspond to multiple
 // PartititionProduceRequests, and therefore multiple PartitionProduceResponses.
@@ -49,6 +60,7 @@ interface RequestState {
 }
 type CorrelationId = number;
 interface ProduceRequestState {
+  correlationId: Int32;
   response: ProduceResponse;
   pendingPartitions: Set<PartitionId>;
 }
@@ -71,7 +83,7 @@ const SocketState = {
 
 // Coordinator object that manages a client connection and forwards requests to
 // partition objects and the global cluster object. Lives as long as the client
-// connection, with no on-disk state
+// connection, with no persistent state
 export class Session {
   private readonly state: DurableObjectState;
   private readonly env: Env;
@@ -102,7 +114,7 @@ export class Session {
 
   fetch(request: Request): Response {
     const upgradeHeader = request.headers.get("Upgrade");
-    if (!upgradeHeader || upgradeHeader !== "websocket") {
+    if (upgradeHeader !== "websocket") {
       return new Response("Expected Upgrade: websocket", { status: 426 });
     }
 
@@ -157,7 +169,9 @@ export class Session {
     decoder: Decoder
   ): Promise<void> {
     const request = decodeProduceRequest(decoder);
-    console.log(`Produce request: ${JSON.stringify(request, null, 2)}`);
+    console.log(
+      `[Session DO] Produce request: ${JSON.stringify(request, null, 2)}`
+    );
 
     const stubResponse = {
       topics: request.topics.map((topic) => ({
@@ -173,6 +187,7 @@ export class Session {
     );
 
     this.requests.produce.pending.set(metadata.correlationId, {
+      correlationId: metadata.correlationId,
       response: stubResponse,
       pendingPartitions: new Set(partitionIds),
     });
@@ -271,7 +286,31 @@ export class Session {
         socket.accept();
         this.partitions.active.set(partitionId, socket);
 
-        // TODO: Register message handler (and error and close)
+        socket.addEventListener("message", (event) => {
+          if (typeof event.data === "string") {
+            console.log("Received string data, but we want binary data!");
+            return;
+          }
+
+          const decoder = new Decoder(event.data);
+          const correlationId = decoder.readInt32();
+
+          const produceRequest =
+            this.requests.produce.pending.get(correlationId);
+          if (produceRequest !== undefined) {
+            this.handlePartitionProduceResponse(
+              produceRequest,
+              partitionId,
+              decoder
+            );
+            return;
+          }
+
+          console.log("Couldn't match Partition response to pending request");
+        });
+
+        // TODO: Add error and close handlers (delete requests that depend on
+        // closed/failed socket)
 
         // Once this.partitions.pending and this.partitions.active have been
         // updated, and the socket event handlers have been registered, the
@@ -285,5 +324,46 @@ export class Session {
     // created before this connection is ready to use
     this.partitions.pending.set(partitionId, promise);
     return { state: SocketState.Pending, socket: promise };
+  }
+
+  private handlePartitionProduceResponse(
+    clientRequest: ProduceRequestState,
+    partitionId: PartitionId,
+    decoder: Decoder
+  ) {
+    if (!clientRequest.pendingPartitions.has(partitionId)) {
+      console.log("Received Partition response from non-pending partition");
+      return;
+    }
+
+    const response = decodePartitionProduceResponse(decoder);
+    const { topic: topicName, index } = parsePartitionId(partitionId);
+    const topic = clientRequest.response.topics.find(
+      (topic) => topic.name === topicName
+    );
+
+    if (topic === undefined) {
+      // This should be an unreachable state
+      return;
+    }
+
+    topic.partitions.push({ ...response, index });
+    clientRequest.pendingPartitions.delete(partitionId);
+
+    if (clientRequest.pendingPartitions.size === 0) {
+      console.log(
+        `[Session DO] Produce response: ${JSON.stringify(
+          clientRequest.response,
+          // Taken from https://github.com/GoogleChromeLabs/jsbi/issues/30#issuecomment-521460510
+          (key, value) =>
+            typeof value === "bigint" ? value.toString() : value,
+          2
+        )}`
+      );
+      const encoder = new KafkaResponseEncoder(clientRequest.correlationId);
+      const buffer = encodeProduceResponse(encoder, clientRequest.response);
+      this.requests.produce.pending.delete(clientRequest.correlationId);
+      this.client.socket.send(buffer);
+    }
   }
 }
