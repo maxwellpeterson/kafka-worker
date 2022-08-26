@@ -1,5 +1,5 @@
 import { Env } from "src/common";
-import { ErrorCode, Int32 } from "src/protocol/common";
+import { ErrorCode } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { PartitionResponseEncoder } from "src/protocol/encoder";
 import {

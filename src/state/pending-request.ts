@@ -8,6 +8,9 @@ import {
 } from "src/state/incremental-response";
 import { PartitionInfo } from "src/state/partition";
 
+// Represents a client request that is waiting on subresponses from Partition
+// DOs. These subresponses arrive asynchronously as WebSocket messages, and need
+// to be pieced together into a complete response that is sent back to the client.
 export interface PendingRequest {
   handlePartitionMessage(partition: PartitionInfo, decoder: Decoder): void;
 }
@@ -27,7 +30,10 @@ export class PendingProduceRequest {
       })),
     };
 
-    this.response = new IncrementalResponse(stubResponse, done);
+    this.response = new IncrementalResponse<ProduceResponse>(
+      stubResponse,
+      done
+    );
   }
 
   handlePartitionMessage(partition: PartitionInfo, decoder: Decoder): void {

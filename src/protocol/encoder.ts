@@ -8,6 +8,9 @@ import {
   int64Size,
 } from "src/protocol/common";
 
+// This implementation borrows heavily from the kafkajs Node library:
+// https://github.com/tulios/kafkajs/blob/master/src/protocol/encoder.js
+
 export class Encoder {
   protected view: DataView;
   protected offset: number;
@@ -21,6 +24,7 @@ export class Encoder {
   private checkCapacity(size: number) {
     const nextLength = this.offset + size;
     if (nextLength > this.view.byteLength) {
+      // If we run out of space, reallocate the backing array
       const newCapacity = 2 * nextLength;
       const newBuffer = new ArrayBuffer(newCapacity);
       new Uint8Array(newBuffer).set(new Uint8Array(this.view.buffer));
@@ -34,6 +38,7 @@ export class Encoder {
     this.offset += int16Size;
   }
 
+  // Convenience method that makes sure "enum" values are encoded as Int16
   writeEnum<T extends Int16>(value: T) {
     this.writeInt16(value);
   }

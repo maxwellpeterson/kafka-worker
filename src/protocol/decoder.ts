@@ -8,6 +8,9 @@ import {
   int64Size,
 } from "src/protocol/common";
 
+// This implementation borrows heavily from the kafkajs Node library:
+// https://github.com/tulios/kafkajs/blob/master/src/protocol/decoder.js
+
 export class Decoder {
   private readonly view: DataView;
   private offset: number;
@@ -70,9 +73,8 @@ export class Decoder {
     return values;
   }
 
-  // In several apis, there is no semantic difference between empty and null
-  // arrays, and converting null arrays to empty arrays eliminates unnecessary
-  // code pollution from null checking
+  // Convenience method for converting null array to empty array in cases where
+  // there is no semantic difference between them
   readArray<T>(readElement: (index: number) => T): T[] {
     return this.readKafkaArray(readElement) ?? [];
   }

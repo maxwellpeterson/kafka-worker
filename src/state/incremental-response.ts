@@ -18,6 +18,17 @@ type PartitionResponse<T extends BaseResponse> = Omit<
   "index"
 >;
 
+// Represents a response that is filled in asynchronously from multiple
+// Partition DO subresponses. Keeps track of the partitions that haven't
+// responded yet, and executes a callback when the response is complete (this
+// callback usually resolves a Promise<T>)
+//
+// The constructor takes a "template" response that is filled in one "template
+// slot" at a time by each subresponse. You can think of this template response
+// as a tree with blank leaves, and each subresponse fills in a new leaf that
+// was previously blank. When all the leaves have been filled in, the tree is
+// complete and can be returned. Note that no leaves are created or removed as
+// part of this process, only updated in place.
 export class IncrementalResponse<T extends BaseResponse> {
   private readonly response: T;
   private readonly done: DoneHandler<T>;
@@ -28,6 +39,11 @@ export class IncrementalResponse<T extends BaseResponse> {
     this.response = stubResponse;
     this.done = done;
 
+    // Assumes that all (topic.name, partition.index) pairs are unique. I'm not
+    // sure if this uniqueness constraint is officially part of the Kafka
+    // protocol, but it doesn't make sense for duplicate pairs to appear in the
+    // same request (unless you wanted to consume the same partition at different
+    // offsets, which I don't think is possible)
     const partitionIds = stubResponse.topics.flatMap((topic) =>
       topic.partitions.map(
         (partition) => new PartitionInfo(topic.name, partition.index).id
@@ -42,7 +58,7 @@ export class IncrementalResponse<T extends BaseResponse> {
       return;
     }
 
-    // Find the placeholder response that we want to fill in
+    // Find the placeholder subresponse that we want to fill in
     const stubResponse = this.response.topics
       .find((topic) => topic.name === partition.topic)
       ?.partitions.find(({ index }) => index === partition.index);
@@ -52,8 +68,8 @@ export class IncrementalResponse<T extends BaseResponse> {
       return;
     }
 
-    // Fill in the matching placeholder with the actual response, and remove the
-    // partition from the pending set
+    // Fill in the matching placeholder with the actual subresponse, and remove
+    // the partition from the pending set
     Object.assign(stubResponse, { ...response, index: partition.index });
     this.pendingPartitions.delete(partition.id);
 

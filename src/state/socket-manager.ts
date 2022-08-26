@@ -12,6 +12,11 @@ interface SocketState {
 }
 type SocketId = string;
 
+// WebSocket connections to DOs are created asynchronously using fetch(). This
+// means connection creation can overlap, and creating a new connection when
+// there is no existing connection can result in multiple connections to the
+// same DO. The SocketManager class controls all DO WebSocket connections and
+// makes sure there are no duplicates.
 export class SocketManager {
   private readonly env: Env;
   private readonly partitionHandler: PartitionHandler;
@@ -28,6 +33,7 @@ export class SocketManager {
     };
   }
 
+  // Send a WebSocket message to the given partition
   async sendPartition(
     partition: PartitionInfo,
     message: ArrayBuffer
@@ -93,7 +99,7 @@ export class SocketManager {
 
         // Once this.partitions.pending and this.partitions.active have been
         // updated, and the socket event handlers have been registered, the
-        // connection is ready for use
+        // connection is ready for sending
         return socket;
       });
 

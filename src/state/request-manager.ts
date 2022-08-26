@@ -15,26 +15,20 @@ import {
 } from "src/state/pending-request";
 import { SocketManager } from "src/state/socket-manager";
 
-// TODO: One ProduceRequest can correspond to multiple
-// PartititionProduceRequests, and therefore multiple PartitionProduceResponses.
-// We need a way to aggregate all of these responses, and once we have them all
-// combine them into a single response to send back to the client
-//
-// Solution: Every outbound WebSocket message is uniquely identified by the tuple
-// (correlationId, partitionId). Before sending these messages, the request
-// handler creates a stub response (topic array is filled in, but partition
-// arrays for each topic are empty) as well as a set of the partitions it will
-// send messages to. When a response is received from a partition, that parition
-// is removed from the set and the stub response is filled in with the response
-// data. When the set is empty, the stub response has been fully filled in and
-// can be sent back to the client.
-//
-// TODO: Verify uniqueness assumptions (in produce request, are topics in topic
-// list and partitions in partition lists guaranteed to be unique? If not we
-// might need to add a third element to the identifier, such as index in the
-// request array, but the same approach should work)
 type CorrelationId = number;
 
+// One Kafka protocol request can operate on multiple partitions, which means
+// multiple subrequests to Partition DOs that fan out, and multiple subresponses
+// that need to be fanned in to complete the final response sent back to the
+// client. The RequestManager class handles the fan out and fan in process.
+//
+// Public RequestManager methods wrap the fan out and fan in process in a
+// "super-promise" that resolves when all subrequests have completed
+// successfully, failed, or timed out. All the caller needs to do is await this
+// promise to get the complete response.
+//
+// Note that error handling and timeouts have not been implemented, but should
+// be a simple extension of this existing structure (TODO).
 export class RequestManager {
   private readonly pending: Map<CorrelationId, PendingRequest>;
   private readonly socket: SocketManager;
@@ -97,6 +91,8 @@ export class RequestManager {
     });
   }
 
+  // Matches WebSocket messages received from Partition DOs to pending client
+  // requests
   handlePartitionMessage(partition: PartitionInfo, message: ArrayBuffer): void {
     const decoder = new Decoder(message);
     const correlationId = decoder.readInt32();

@@ -13,7 +13,7 @@ describe("decodeMetadataRequest", () => {
   type TestCase = [string, MetadataRequest];
   const cases: TestCase[] = [
     ["no topics", { topics: [] }],
-    ["one topics", { topics: ["topic-one"] }],
+    ["one topic", { topics: ["topic-one"] }],
     ["multiple topics", { topics: ["topic-one", "topic-two", "topic-three"] }],
   ];
   test.each(cases)("%s", (_name, request) => {

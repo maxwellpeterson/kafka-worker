@@ -1,17 +1,14 @@
+// We make this a read-only object to prevent any accidental funny business
 export type Env = Readonly<{
-  // The hostname of this worker
+  // The hostname of this worker (required)
   HOSTNAME: string;
-  // The port of this worker
+  // The port of this worker (required)
   PORT: string;
   SESSION: DurableObjectNamespace;
   CLUSTER: DurableObjectNamespace;
   PARTITION: DurableObjectNamespace;
-  // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
-  // MY_KV_NAMESPACE: KVNamespace;
-  //
-  // Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
-  // MY_BUCKET: R2Bucket;
 }>;
 
+// Generic utility types used in many places
 export type ValueOf<T> = T[keyof T];
 export type ElemOf<T extends E[], E = T[number]> = E;

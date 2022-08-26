@@ -14,16 +14,15 @@ import { fetchClusterMetadata } from "src/state/cluster";
 import { RequestManager } from "src/state/request-manager";
 
 // Coordinator object that handles one client connection and forwards incoming
-// requests to partition objects and the global cluster object. Lives as long as
-// the client connection, with no persistent state
+// requests to Partition DOs and the global Cluster DO. Lives as long as the
+// client connection, with no persistent state
 export class Session {
-  private readonly state: DurableObjectState;
   private readonly env: Env;
 
+  // Client for making internal requests to DOs
   private readonly internal: RequestManager;
 
-  constructor(state: DurableObjectState, env: Env) {
-    this.state = state;
+  constructor(_state: DurableObjectState, env: Env) {
     this.env = env;
 
     this.internal = new RequestManager(env);
@@ -104,6 +103,7 @@ export class Session {
     console.log(
       `[Session DO] Produce response: ${JSON.stringify(
         response,
+        // TODO: Make this take effect globally
         // Taken from https://github.com/GoogleChromeLabs/jsbi/issues/30#issuecomment-521460510
         (key, value) => (typeof value === "bigint" ? value.toString() : value),
         2

@@ -46,6 +46,7 @@ export class Cluster {
     this.env = env;
   }
 
+  // TODO: This should be converted to a WebSocket protocol
   async fetch(request: Request): Promise<Response> {
     const topicQuery = new URL(request.url).searchParams.get(searchParam);
     if (topicQuery === null) {
@@ -67,7 +68,7 @@ export class Cluster {
       },
     ];
 
-    // Empty list means return metadata for all topics
+    // Empty topic list means return metadata for all topics
     if (topicNames.length === 0) {
       return new Response(
         JSON.stringify({ brokers, topics: state.topics.map(generateMetadata) })
@@ -83,7 +84,7 @@ export class Cluster {
             return {
               errorCode: ErrorCode.UnknownTopicOrPartition,
               name: topicName,
-              partitions: null,
+              partitions: [],
             };
           }
           return generateMetadata(topic);
@@ -104,6 +105,8 @@ const generateMetadata = (topic: Topic): TopicMetadata => ({
     isrNodes: [],
   })),
 });
+
+// Types that describe values stored by Cluster DO, for internal use only
 
 interface TopicState {
   topics: Topic[];
