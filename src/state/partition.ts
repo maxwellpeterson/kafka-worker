@@ -38,16 +38,17 @@ interface Chunk {
 // Tuple of [startIndex, size]
 type MessageFrame = [number, number];
 
-// Length of chunk buffer in bytes
-const chunkSize = 34;
-
 export class Partition {
   private readonly state: DurableObjectState;
   private readonly env: Env;
 
+  private readonly chunkSize: number;
+
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
+
+    this.chunkSize = parseInt(env.PARTITION_CHUNK_SIZE);
   }
 
   fetch(request: Request): Response {
@@ -131,7 +132,7 @@ export class Partition {
     for (
       let chunk = currentChunk;
       !filler.done();
-      chunk = makeChunk(cursor.nextOffset)
+      chunk = this.makeChunk(cursor.nextOffset)
     ) {
       cursor.nextOffset += BigInt(filler.fillChunk(chunk));
       cursor.currentChunkStart = chunk.offsetStart;
@@ -146,23 +147,22 @@ export class Partition {
 
   private async getCurrentChunk(cursor: OffsetInfo): Promise<Chunk> {
     if (cursor.currentChunkStart === BigInt(-1)) {
-      return makeChunk(cursor.nextOffset);
+      return this.makeChunk(cursor.nextOffset);
     }
     // Chunk must exist, because offset and chunk are updated atomically
     return this.state.storage.get<Chunk>(
       cursor.currentChunkStart.toString()
     ) as Promise<Chunk>;
   }
+  makeChunk(offsetStart: Int64): Chunk {
+    return {
+      offsetStart,
+      buffer: new ArrayBuffer(this.chunkSize),
+      frames: [],
+      nextIndex: 0,
+    };
+  }
 }
-
-const makeChunk = (offsetStart: Int64): Chunk => {
-  return {
-    offsetStart,
-    buffer: new ArrayBuffer(chunkSize),
-    frames: [],
-    nextIndex: 0,
-  };
-};
 
 const prepareMessageSet = (
   buffer: ArrayBuffer,

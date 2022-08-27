@@ -4,6 +4,8 @@ export type Env = Readonly<{
   HOSTNAME: string;
   // The port of this worker (required)
   PORT: string;
+  // The length of partition storage chunks in bytes (required)
+  PARTITION_CHUNK_SIZE: string;
   SESSION: DurableObjectNamespace;
   CLUSTER: DurableObjectNamespace;
   PARTITION: DurableObjectNamespace;

@@ -5,6 +5,7 @@ compatibility_date = "2022-08-21"
 [vars]
 HOSTNAME="localhost"
 PORT="8787"
+PARTITION_CHUNK_SIZE="4096"
 
 [durable_objects]
 bindings = [
