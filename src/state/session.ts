@@ -1,4 +1,4 @@
-import { Env } from "src/common";
+import { Env, stringify } from "src/common";
 import {
   decodeMetadataRequest,
   encodeMetadataResponse,
@@ -51,7 +51,9 @@ export class Session {
           }
         })
         .catch((error: Error) =>
-          console.log(`Error while handling request: ${error.message}`)
+          console.log(
+            `[Session DO] Error while handling request: ${error.message}`
+          )
         );
     });
 
@@ -94,21 +96,11 @@ export class Session {
     encoder: Encoder
   ): Promise<ArrayBuffer | null> {
     const request = decodeProduceRequest(decoder);
-    console.log(
-      `[Session DO] Produce request: ${JSON.stringify(request, null, 2)}`
-    );
+    console.log(`[Session DO] Produce request: ${stringify(request)}`);
 
     const response = await this.internal.produceRequest(metadata, request);
 
-    console.log(
-      `[Session DO] Produce response: ${JSON.stringify(
-        response,
-        // TODO: Make this take effect globally
-        // Taken from https://github.com/GoogleChromeLabs/jsbi/issues/30#issuecomment-521460510
-        (key, value) => (typeof value === "bigint" ? value.toString() : value),
-        2
-      )}`
-    );
+    console.log(`[Session DO] Produce response: ${stringify(response)}`);
 
     if (response === null) {
       return null;
@@ -122,14 +114,10 @@ export class Session {
     encoder: Encoder
   ): Promise<ArrayBuffer> {
     const request = decodeMetadataRequest(decoder);
-    console.log(
-      `[Session DO] Metadata request: ${JSON.stringify(request, null, 2)}`
-    );
+    console.log(`[Session DO] Metadata request: ${stringify(request)}`);
 
     const response = await fetchClusterMetadata(this.env, request.topics);
-    console.log(
-      `[Session DO] Metadata response: ${JSON.stringify(response, null, 2)}`
-    );
+    console.log(`[Session DO] Metadata response: ${stringify(response)}`);
 
     return encodeMetadataResponse(encoder, response);
   }
