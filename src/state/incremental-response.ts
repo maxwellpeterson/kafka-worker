@@ -58,7 +58,7 @@ export class IncrementalResponse<T extends BaseResponse> {
 
   addPartition(partition: PartitionInfo, response: PartitionResponse<T>) {
     if (!this.pendingPartitions.has(partition.id)) {
-      console.log("Received Partition response from non-pending partition");
+      // Partition is no longer pending, discard response
       return;
     }
 

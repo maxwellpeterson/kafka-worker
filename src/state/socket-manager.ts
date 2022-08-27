@@ -13,10 +13,10 @@ interface SocketState {
 type SocketId = string;
 
 // WebSocket connections to DOs are created asynchronously using fetch(). This
-// means connection creation can overlap, and creating a new connection when
-// there is no existing connection can result in multiple connections to the
-// same DO. The SocketManager class controls all DO WebSocket connections and
-// makes sure there are no duplicates.
+// means connection creation can overlap, and always creating a new connection
+// when there is no existing connection can result in multiple connections to
+// the same DO. The SocketManager class controls all DO WebSocket connections
+// and makes sure there are no duplicates.
 export class SocketManager {
   private readonly env: Env;
   private readonly partitionHandler: PartitionHandler;
