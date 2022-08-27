@@ -2,11 +2,11 @@ import { ProduceRequest, ProduceResponse } from "src/protocol/api/produce";
 import { ErrorCode } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { decodePartitionProduceResponse } from "src/protocol/internal/partition";
+import { PartitionInfo } from "src/state/broker/partition";
 import {
   DoneHandler,
   IncrementalResponse,
-} from "src/state/incremental-response";
-import { PartitionInfo } from "src/state/partition";
+} from "src/state/client/incremental-response";
 
 // Represents a client request that is waiting on subresponses from Partition
 // DOs. These subresponses arrive asynchronously as WebSocket messages, and need

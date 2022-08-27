@@ -8,12 +8,12 @@ import {
   encodePartitionProduceRequest,
   encodePartitionRequestHeader,
 } from "src/protocol/internal/partition";
-import { PartitionInfo } from "src/state/partition";
+import { PartitionInfo } from "src/state/broker/partition";
 import {
   PendingProduceRequest,
   PendingRequest,
-} from "src/state/pending-request";
-import { SocketManager } from "src/state/socket-manager";
+} from "src/state/client/pending-request";
+import { SocketManager } from "src/state/client/socket-manager";
 
 type CorrelationId = number;
 

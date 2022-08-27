@@ -1,5 +1,5 @@
 import { Env } from "src/common";
-import { PartitionInfo, partitionStubUrl } from "src/state/partition";
+import { PartitionInfo, partitionStubUrl } from "src/state/broker/partition";
 
 interface PartitionHandler {
   handlePartitionMessage(partition: PartitionInfo, message: ArrayBuffer): void;

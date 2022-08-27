@@ -1,8 +1,8 @@
 import { Env } from "src/common";
 
-export { Session } from "src/state/session";
+export { Session } from "src/state/client/session";
 export { Cluster } from "src/state/cluster";
-export { Partition } from "src/state/partition";
+export { Partition } from "src/state/broker/partition";
 
 export default {
   // All the gateway worker does is forward the request to the Session DO, which

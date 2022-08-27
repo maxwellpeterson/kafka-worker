@@ -1,10 +1,10 @@
 import { ErrorCode } from "src/protocol/common";
 import { clone } from "src/protocol/test-utils";
+import { PartitionInfo } from "src/state/broker/partition";
 import {
   IncrementalResponse,
   PartitionResponse,
-} from "src/state/incremental-response";
-import { PartitionInfo } from "src/state/partition";
+} from "src/state/client/incremental-response";
 
 interface TestResponse {
   topics: {

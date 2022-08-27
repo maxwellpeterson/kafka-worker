@@ -10,8 +10,8 @@ import {
 import { ApiKey, RequestMetadata, validApiKey } from "src/protocol/common";
 import { Decoder, KafkaRequestDecoder } from "src/protocol/decoder";
 import { Encoder, KafkaResponseEncoder } from "src/protocol/encoder";
+import { RequestManager } from "src/state/client/request-manager";
 import { fetchClusterMetadata } from "src/state/cluster";
-import { RequestManager } from "src/state/request-manager";
 
 // Coordinator object that handles one client connection and forwards incoming
 // requests to Partition DOs and the global Cluster DO. Lives as long as the
