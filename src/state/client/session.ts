@@ -13,59 +13,21 @@ import { Encoder, KafkaResponseEncoder } from "src/protocol/encoder";
 import { RequestManager } from "src/state/client/request-manager";
 import { fetchClusterMetadata } from "src/state/cluster";
 
-// Coordinator object that handles one client connection and forwards incoming
-// requests to Partition DOs and the global Cluster DO. Lives as long as the
-// client connection, with no persistent state
+// Coordinator class that handles one client connection and forwards incoming
+// requests to Partition DOs and the global Cluster DO
 export class Session {
   private readonly env: Env;
 
   // Client for making internal requests to DOs
   private readonly internal: RequestManager;
 
-  constructor(_state: DurableObjectState, env: Env) {
+  constructor(env: Env) {
     this.env = env;
 
     this.internal = new RequestManager(env);
   }
 
-  fetch(request: Request): Response {
-    const upgradeHeader = request.headers.get("Upgrade");
-    if (upgradeHeader !== "websocket") {
-      return new Response("Expected Upgrade: websocket", { status: 426 });
-    }
-
-    const webSocketPair = new WebSocketPair();
-    const [client, server] = Object.values(webSocketPair);
-
-    server.accept();
-    server.addEventListener("message", (event) => {
-      if (typeof event.data === "string") {
-        console.log("Received string data, but we want binary data!");
-        return;
-      }
-
-      this.handleRequest(event.data)
-        .then((response) => {
-          if (response !== null) {
-            server.send(response);
-          }
-        })
-        .catch((error: Error) =>
-          console.log(
-            `[Session DO] Error while handling request: ${error.message}`
-          )
-        );
-    });
-
-    return new Response(null, {
-      status: 101,
-      webSocket: client,
-    });
-  }
-
-  private async handleRequest(
-    buffer: ArrayBuffer
-  ): Promise<ArrayBuffer | null> {
+  async handleRequest(buffer: ArrayBuffer): Promise<ArrayBuffer | null> {
     const decoder = new KafkaRequestDecoder(buffer);
     const apiKey = decoder.readEnum(validApiKey);
     const metadata = {
@@ -96,11 +58,11 @@ export class Session {
     encoder: Encoder
   ): Promise<ArrayBuffer | null> {
     const request = decodeProduceRequest(decoder);
-    console.log(`[Session DO] Produce request: ${stringify(request)}`);
+    console.log(`Produce request: ${stringify(request)}`);
 
     const response = await this.internal.produceRequest(metadata, request);
 
-    console.log(`[Session DO] Produce response: ${stringify(response)}`);
+    console.log(`Produce response: ${stringify(response)}`);
 
     if (response === null) {
       return null;
@@ -114,10 +76,10 @@ export class Session {
     encoder: Encoder
   ): Promise<ArrayBuffer> {
     const request = decodeMetadataRequest(decoder);
-    console.log(`[Session DO] Metadata request: ${stringify(request)}`);
+    console.log(`Metadata request: ${stringify(request)}`);
 
     const response = await fetchClusterMetadata(this.env, request.topics);
-    console.log(`[Session DO] Metadata response: ${stringify(response)}`);
+    console.log(`Metadata response: ${stringify(response)}`);
 
     return encodeMetadataResponse(encoder, response);
   }
