@@ -1,5 +1,5 @@
-import { Env } from "src/common";
-import { MetadataResponse, TopicMetadata } from "src/protocol/api/metadata";
+import { ElemOf, Env } from "src/common";
+import { MetadataResponse } from "src/protocol/api/metadata";
 import { ErrorCode, Int32 } from "src/protocol/common";
 
 const globalClusterName = "global";
@@ -31,11 +31,18 @@ export const fetchClusterMetadata = async (
   return await response.json<MetadataResponse>();
 };
 
-// TODO: Topics could be individually keyed?
-const topicStateKey = "TopicState";
-const initialTopicState: TopicState = {
+interface ClusterState {
+  topics: {
+    name: string;
+    partitions: {
+      index: Int32;
+    }[];
+  }[];
+}
+const initialClusterState: ClusterState = {
   topics: [{ name: "test-topic", partitions: [{ index: 999 }] }],
 };
+const clusterStateKey = "cluster-state";
 
 export class Cluster {
   private readonly state: DurableObjectState;
@@ -57,8 +64,8 @@ export class Cluster {
 
     const topicNames = topicQuery === "" ? [] : topicQuery.split(",");
     const state =
-      (await this.state.storage.get<TopicState>(topicStateKey)) ??
-      initialTopicState;
+      (await this.state.storage.get<ClusterState>(clusterStateKey)) ??
+      initialClusterState;
 
     const brokers = [
       {
@@ -94,7 +101,10 @@ export class Cluster {
   }
 }
 
-const generateMetadata = (topic: Topic): TopicMetadata => ({
+type TopicState = ElemOf<ClusterState["topics"]>;
+type TopicMetadata = ElemOf<MetadataResponse["topics"]>;
+
+const generateMetadata = (topic: TopicState): TopicMetadata => ({
   errorCode: ErrorCode.None,
   name: topic.name,
   partitions: topic.partitions.map((partition) => ({
@@ -105,18 +115,3 @@ const generateMetadata = (topic: Topic): TopicMetadata => ({
     isrNodes: [],
   })),
 });
-
-// Types that describe values stored by Cluster DO, for internal use only
-
-interface TopicState {
-  topics: Topic[];
-}
-
-interface Topic {
-  name: string;
-  partitions: Partition[];
-}
-
-interface Partition {
-  index: Int32;
-}

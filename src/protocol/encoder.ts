@@ -94,11 +94,16 @@ export class Encoder {
     return this.writeArray(values, (value) => this.writeString(value));
   }
 
-  writeBuffer(buffer: ArrayBuffer): this {
+  private writeBuffer(buffer: ArrayBuffer): this {
     this.checkCapacity(buffer.byteLength);
     new Uint8Array(this.view.buffer).set(new Uint8Array(buffer), this.offset);
     this.offset += buffer.byteLength;
     return this;
+  }
+
+  writeMessageSet(buffer: ArrayBuffer): this {
+    this.writeInt32(buffer.byteLength);
+    return this.writeBuffer(buffer);
   }
 
   buffer(): ArrayBuffer {

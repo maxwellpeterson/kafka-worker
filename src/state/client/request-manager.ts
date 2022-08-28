@@ -67,7 +67,6 @@ export class RequestManager {
 
             const partitionRequest = encodePartitionProduceRequest(encoder, {
               acks: request.acks,
-              messageSetSize: partition.messageSetSize,
               messageSet: partition.messageSet,
             });
 

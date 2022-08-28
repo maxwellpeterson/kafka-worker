@@ -23,41 +23,27 @@ import { Encoder } from "src/protocol/encoder";
 export interface ProduceRequest {
   acks: Acks;
   timeoutMs: Int32;
-  topics: TopicData[];
+  topics: {
+    name: string;
+    partitions: {
+      index: Int32;
+      messageSet: ArrayBuffer;
+    }[];
+  }[];
 }
 
 export const decodeProduceRequest = (decoder: Decoder): ProduceRequest => {
   return {
     acks: decoder.readAcks(),
     timeoutMs: decoder.readInt32(),
-    topics: decoder.readArray(decodeTopicData(decoder)),
+    topics: decoder.readArray(() => ({
+      name: decoder.readString(),
+      partitions: decoder.readArray(() => ({
+        index: decoder.readInt32(),
+        messageSet: decoder.readMessageSet(),
+      })),
+    })),
   };
-};
-
-export interface TopicData {
-  name: string;
-  partitions: PartitionData[];
-}
-
-const decodeTopicData = (decoder: Decoder) => (): TopicData => {
-  return {
-    name: decoder.readString(),
-    partitions: decoder.readArray(decodePartitionData(decoder)),
-  };
-};
-
-export interface PartitionData {
-  index: Int32;
-  messageSetSize: Int32;
-  messageSet: ArrayBuffer;
-}
-
-const decodePartitionData = (decoder: Decoder) => (): PartitionData => {
-  const data = {
-    index: decoder.readInt32(),
-    messageSetSize: decoder.readInt32(),
-  };
-  return { ...data, messageSet: decoder.readBuffer(data.messageSetSize) };
 };
 
 // Produce Response (Version: 0) => [responses]
@@ -71,7 +57,14 @@ const decodePartitionData = (decoder: Decoder) => (): PartitionData => {
 // https://kafka.apache.org/protocol.html#The_Messages_Produce
 
 export interface ProduceResponse {
-  topics: TopicResponse[];
+  topics: {
+    name: string;
+    partitions: {
+      index: Int32;
+      errorCode: ErrorCode;
+      baseOffset: Int64;
+    }[];
+  }[];
 }
 
 export const encodeProduceResponse = (
@@ -79,34 +72,15 @@ export const encodeProduceResponse = (
   response: ProduceResponse
 ): ArrayBuffer => {
   return encoder
-    .writeArray(response.topics, encodeTopicResponse(encoder))
+    .writeArray(response.topics, (topic) =>
+      encoder
+        .writeString(topic.name)
+        .writeArray(topic.partitions, (partition) =>
+          encoder
+            .writeInt32(partition.index)
+            .writeEnum(partition.errorCode)
+            .writeInt64(partition.baseOffset)
+        )
+    )
     .buffer();
 };
-
-export interface TopicResponse {
-  name: string;
-  partitions: PartitionResponse[];
-}
-
-const encodeTopicResponse =
-  (encoder: Encoder) =>
-  (topic: TopicResponse): Encoder => {
-    return encoder
-      .writeString(topic.name)
-      .writeArray(topic.partitions, encodePartitionResponse(encoder));
-  };
-
-export interface PartitionResponse {
-  index: Int32;
-  errorCode: ErrorCode;
-  baseOffset: Int64;
-}
-
-const encodePartitionResponse =
-  (encoder: Encoder) =>
-  (partition: PartitionResponse): Encoder => {
-    return encoder
-      .writeInt32(partition.index)
-      .writeEnum(partition.errorCode)
-      .writeInt64(partition.baseOffset);
-  };

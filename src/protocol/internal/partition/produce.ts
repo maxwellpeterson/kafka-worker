@@ -1,4 +1,4 @@
-import { Acks, ErrorCode, Int32, Int64 } from "src/protocol/common";
+import { Acks, ErrorCode, Int64 } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 
@@ -9,7 +9,6 @@ import { Encoder } from "src/protocol/encoder";
 
 export interface PartitionProduceRequest {
   acks: Acks;
-  messageSetSize: Int32;
   messageSet: ArrayBuffer;
 }
 
@@ -19,23 +18,16 @@ export const encodePartitionProduceRequest = (
 ): ArrayBuffer => {
   return encoder
     .writeEnum(request.acks)
-    .writeInt32(request.messageSetSize)
-    .writeBuffer(request.messageSet)
+    .writeMessageSet(request.messageSet)
     .buffer();
 };
 
 export const decodePartitionProduceRequest = (
   decoder: Decoder
-): PartitionProduceRequest => {
-  const request = {
-    acks: decoder.readAcks(),
-    messageSetSize: decoder.readInt32(),
-  };
-  return {
-    ...request,
-    messageSet: decoder.readBuffer(request.messageSetSize),
-  };
-};
+): PartitionProduceRequest => ({
+  acks: decoder.readAcks(),
+  messageSet: decoder.readMessageSet(),
+});
 
 // Partition Produce Response (Version: 0) => error_code base_offset
 //   error_code => INT16

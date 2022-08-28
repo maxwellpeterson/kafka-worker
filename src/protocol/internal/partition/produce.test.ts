@@ -18,7 +18,6 @@ describe("PartitionProduceRequest", () => {
       "baseline request",
       {
         acks: Acks.Leader,
-        messageSetSize: 64,
         messageSet: fillBuffer(64),
       },
     ],
@@ -26,7 +25,6 @@ describe("PartitionProduceRequest", () => {
       "no acks",
       {
         acks: Acks.None,
-        messageSetSize: 100,
         messageSet: fillBuffer(100),
       },
     ],
@@ -34,7 +32,6 @@ describe("PartitionProduceRequest", () => {
       "full isr acks",
       {
         acks: Acks.FullISR,
-        messageSetSize: 37,
         messageSet: fillBuffer(37),
       },
     ],
@@ -42,7 +39,6 @@ describe("PartitionProduceRequest", () => {
       "empty message set",
       {
         acks: Acks.Leader,
-        messageSetSize: 0,
         messageSet: new ArrayBuffer(0),
       },
     ],

@@ -113,9 +113,14 @@ export class Decoder {
     return this.readArray(() => this.readString());
   }
 
-  readBuffer(size: Int32): ArrayBuffer {
+  private readBuffer(size: Int32): ArrayBuffer {
     const buffer = this.view.buffer.slice(this.offset, this.offset + size);
     this.offset += size;
     return buffer;
+  }
+
+  readMessageSet(): ArrayBuffer {
+    const size = this.readInt32();
+    return this.readBuffer(size);
   }
 }

@@ -40,6 +40,8 @@ export const prepareMessageSet = (
   return new ChunkFiller(buffer, frames);
 };
 
+// TODO: Might want to wrap the ArrayBuffer in a Uint8Array and use subarray()
+// instead of slice() to avoid a bunch of copies/allocations?
 class ChunkFiller {
   private buffer: ArrayBuffer;
   private frames: MessageFrame[];
