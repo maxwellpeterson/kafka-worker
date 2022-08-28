@@ -1,4 +1,5 @@
 import {
+  ErrorCode,
   Int16,
   Int32,
   Int64,
@@ -6,6 +7,7 @@ import {
   int16Size,
   int32Size,
   int64Size,
+  validErrorCode,
 } from "src/protocol/common";
 
 // This implementation borrows heavily from the kafkajs Node library:
@@ -32,6 +34,10 @@ export class Decoder {
       throw new Error(`Invalid enum value: ${value}`);
     }
     return value;
+  }
+
+  readErrorCode(): ErrorCode {
+    return this.readEnum(validErrorCode);
   }
 
   readInt32(): Int32 {
@@ -79,24 +85,17 @@ export class Decoder {
     return this.readKafkaArray(readElement) ?? [];
   }
 
+  readInt32Array(): Int32[] {
+    return this.readArray(() => this.readInt32());
+  }
+
+  readStringArray(): string[] {
+    return this.readArray(() => this.readString());
+  }
+
   readBuffer(size: Int32): ArrayBuffer {
     const buffer = this.view.buffer.slice(this.offset, this.offset + size);
     this.offset += size;
     return buffer;
-  }
-}
-
-export class KafkaRequestDecoder extends Decoder {
-  constructor(buffer: ArrayBuffer) {
-    super(buffer);
-
-    const expectedSize = this.readInt32();
-    const actualSize = buffer.byteLength - int32Size;
-
-    if (expectedSize !== actualSize) {
-      throw new Error(
-        `Message length does not match size header: expected ${expectedSize} but got ${actualSize}`
-      );
-    }
   }
 }

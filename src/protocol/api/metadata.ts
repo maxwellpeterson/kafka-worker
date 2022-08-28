@@ -12,8 +12,15 @@ export interface MetadataRequest {
   topics: string[];
 }
 
+export const encodeMetadataRequest = (
+  encoder: Encoder,
+  request: MetadataRequest
+): ArrayBuffer => {
+  return encoder.writeStringArray(request.topics).buffer();
+};
+
 export const decodeMetadataRequest = (decoder: Decoder): MetadataRequest => {
-  return { topics: decoder.readArray(() => decoder.readString()) };
+  return { topics: decoder.readStringArray() };
 };
 
 // Metadata Response (Version: 0) => [brokers] [topics]
@@ -42,13 +49,17 @@ export const encodeMetadataResponse = (
   encoder: Encoder,
   response: MetadataResponse
 ): ArrayBuffer => {
-  encoder.writeArray(response.brokers, (broker) =>
-    encodeBroker(encoder, broker)
-  );
-  encoder.writeArray(response.topics, (metadata) =>
-    encodeTopicMetadata(encoder, metadata)
-  );
-  return encoder.buffer();
+  return encoder
+    .writeArray(response.brokers, encodeBroker(encoder))
+    .writeArray(response.topics, encodeTopicMetadata(encoder))
+    .buffer();
+};
+
+export const decodeMetadataResponse = (decoder: Decoder): MetadataResponse => {
+  return {
+    brokers: decoder.readArray(decodeBroker(decoder)),
+    topics: decoder.readArray(decodeTopicMetadata(decoder)),
+  };
 };
 
 export interface Broker {
@@ -57,10 +68,21 @@ export interface Broker {
   port: Int32;
 }
 
-const encodeBroker = (encoder: Encoder, broker: Broker) => {
-  encoder.writeInt32(broker.nodeId);
-  encoder.writeString(broker.host);
-  encoder.writeInt32(broker.port);
+const encodeBroker =
+  (encoder: Encoder) =>
+  (broker: Broker): Encoder => {
+    return encoder
+      .writeInt32(broker.nodeId)
+      .writeString(broker.host)
+      .writeInt32(broker.port);
+  };
+
+const decodeBroker = (decoder: Decoder) => (): Broker => {
+  return {
+    nodeId: decoder.readInt32(),
+    host: decoder.readString(),
+    port: decoder.readInt32(),
+  };
 };
 
 export interface TopicMetadata {
@@ -69,12 +91,21 @@ export interface TopicMetadata {
   partitions: PartitionMetadata[];
 }
 
-const encodeTopicMetadata = (encoder: Encoder, metadata: TopicMetadata) => {
-  encoder.writeEnum(metadata.errorCode);
-  encoder.writeString(metadata.name);
-  encoder.writeArray(metadata.partitions, (metadata) =>
-    encodePartitionMetadata(encoder, metadata)
-  );
+const encodeTopicMetadata =
+  (encoder: Encoder) =>
+  (metadata: TopicMetadata): Encoder => {
+    return encoder
+      .writeEnum(metadata.errorCode)
+      .writeString(metadata.name)
+      .writeArray(metadata.partitions, encodePartitionMetadata(encoder));
+  };
+
+const decodeTopicMetadata = (decoder: Decoder) => (): TopicMetadata => {
+  return {
+    errorCode: decoder.readErrorCode(),
+    name: decoder.readString(),
+    partitions: decoder.readArray(decodePartitionMetadata(decoder)),
+  };
 };
 
 export interface PartitionMetadata {
@@ -85,15 +116,23 @@ export interface PartitionMetadata {
   isrNodes: Int32[];
 }
 
-const encodePartitionMetadata = (
-  encoder: Encoder,
-  metadata: PartitionMetadata
-) => {
-  encoder.writeEnum(metadata.errorCode);
-  encoder.writeInt32(metadata.partitionIndex);
-  encoder.writeInt32(metadata.leaderId);
-  encoder.writeArray(metadata.replicaNodes, (replica) =>
-    encoder.writeInt32(replica)
-  );
-  encoder.writeArray(metadata.isrNodes, (isr) => encoder.writeInt32(isr));
+const encodePartitionMetadata =
+  (encoder: Encoder) =>
+  (metadata: PartitionMetadata): Encoder => {
+    return encoder
+      .writeEnum(metadata.errorCode)
+      .writeInt32(metadata.partitionIndex)
+      .writeInt32(metadata.leaderId)
+      .writeInt32Array(metadata.replicaNodes)
+      .writeInt32Array(metadata.isrNodes);
+  };
+
+const decodePartitionMetadata = (decoder: Decoder) => (): PartitionMetadata => {
+  return {
+    errorCode: decoder.readErrorCode(),
+    partitionIndex: decoder.readInt32(),
+    leaderId: decoder.readInt32(),
+    replicaNodes: decoder.readInt32Array(),
+    isrNodes: decoder.readInt32Array(),
+  };
 };

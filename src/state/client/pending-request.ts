@@ -1,7 +1,7 @@
 import { ProduceRequest, ProduceResponse } from "src/protocol/api/produce";
 import { ErrorCode } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
-import { decodePartitionProduceResponse } from "src/protocol/internal/partition";
+import { decodePartitionProduceResponse } from "src/protocol/internal/partition/produce";
 import { PartitionInfo } from "src/state/broker/partition";
 import {
   DoneHandler,

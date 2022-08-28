@@ -1,15 +1,18 @@
 import { Env, stringify } from "src/common";
 import { Acks, ErrorCode, Int64 } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
-import { Encoder, PartitionResponseEncoder } from "src/protocol/encoder";
+import { Encoder } from "src/protocol/encoder";
 import {
   PartitionApiKey,
-  PartitionProduceResponse,
   PartitionRequestHeader,
-  decodePartitionProduceRequest,
+  PartitionResponseEncoder,
   decodePartitionRequestHeader,
+} from "src/protocol/internal/partition/common";
+import {
+  PartitionProduceResponse,
+  decodePartitionProduceRequest,
   encodePartitionProduceResponse,
-} from "src/protocol/internal/partition";
+} from "src/protocol/internal/partition/produce";
 import { Chunk, prepareMessageSet } from "src/state/broker/chunk";
 
 export const partitionStubUrl = "https://partition.state";

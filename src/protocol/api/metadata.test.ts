@@ -2,6 +2,8 @@ import {
   MetadataRequest,
   MetadataResponse,
   decodeMetadataRequest,
+  decodeMetadataResponse,
+  encodeMetadataRequest,
   encodeMetadataResponse,
 } from "src/protocol/api/metadata";
 import { ErrorCode } from "src/protocol/common";
@@ -9,7 +11,7 @@ import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import { base64 } from "src/protocol/test-utils";
 
-describe("decodeMetadataRequest", () => {
+describe("MetadataRequest", () => {
   type TestCase = [string, MetadataRequest];
   const cases: TestCase[] = [
     ["no topics", { topics: [] }],
@@ -18,8 +20,9 @@ describe("decodeMetadataRequest", () => {
   ];
   test.each(cases)("%s", (_name, request) => {
     const encoder = new Encoder();
-    encoder.writeArray(request.topics, (topic) => encoder.writeString(topic));
-    const buffer = encoder.buffer();
+    const buffer = encodeMetadataRequest(encoder, request);
+
+    expect(base64(buffer)).toMatchSnapshot();
 
     const decoder = new Decoder(buffer);
     const decoded = decodeMetadataRequest(decoder);
@@ -28,7 +31,7 @@ describe("decodeMetadataRequest", () => {
   });
 });
 
-describe("encodeMetadataResponse", () => {
+describe("MetadataResponse", () => {
   type TestCase = [string, MetadataResponse];
   const cases: TestCase[] = [
     [
@@ -169,10 +172,14 @@ describe("encodeMetadataResponse", () => {
   ];
 
   test.each(cases)("%s", (_name, response) => {
-    // TODO: Write response decoder and assert output matches original response,
-    // and use snapshot as a hedge against encoder/decoder bugs
     const encoder = new Encoder();
     const buffer = encodeMetadataResponse(encoder, response);
+
     expect(base64(buffer)).toMatchSnapshot();
+
+    const decoder = new Decoder(buffer);
+    const decoded = decodeMetadataResponse(decoder);
+
+    expect(response).toEqual(decoded);
   });
 });

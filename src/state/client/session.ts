@@ -1,5 +1,9 @@
 import { Env, stringify } from "src/common";
 import {
+  KafkaRequestDecoder,
+  KafkaResponseEncoder,
+} from "src/protocol/api/common";
+import {
   decodeMetadataRequest,
   encodeMetadataResponse,
 } from "src/protocol/api/metadata";
@@ -8,8 +12,8 @@ import {
   encodeProduceResponse,
 } from "src/protocol/api/produce";
 import { ApiKey, RequestMetadata, validApiKey } from "src/protocol/common";
-import { Decoder, KafkaRequestDecoder } from "src/protocol/decoder";
-import { Encoder, KafkaResponseEncoder } from "src/protocol/encoder";
+import { Decoder } from "src/protocol/decoder";
+import { Encoder } from "src/protocol/encoder";
 import { RequestManager } from "src/state/client/request-manager";
 import { fetchClusterMetadata } from "src/state/cluster";
 

@@ -5,9 +5,9 @@ import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import {
   PartitionApiKey,
-  encodePartitionProduceRequest,
   encodePartitionRequestHeader,
-} from "src/protocol/internal/partition";
+} from "src/protocol/internal/partition/common";
+import { encodePartitionProduceRequest } from "src/protocol/internal/partition/produce";
 import { PartitionInfo } from "src/state/broker/partition";
 import {
   PendingProduceRequest,
