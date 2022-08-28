@@ -3,6 +3,7 @@ import {
   Int32,
   Int64,
   KafkaArray,
+  NullableString,
   int16Size,
   int32Size,
   int64Size,
@@ -65,6 +66,14 @@ export class Encoder {
     new Uint8Array(this.view.buffer).set(bytes, this.offset);
     this.offset += bytes.length;
     return this;
+  }
+
+  writeNullableString(value: NullableString): this {
+    if (value === null) {
+      this.writeInt16(-1);
+      return this;
+    }
+    return this.writeString(value);
   }
 
   writeArray<T>(values: KafkaArray<T>, writeElement: (value: T) => void): this {

@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`RequestHeader baseline header 1`] = `"AAMAAAAAAGQAA21heA=="`;
+
+exports[`RequestHeader empty client id 1`] = `"AAMAAAAABAAAAA=="`;
+
+exports[`RequestHeader nonzero api version 1`] = `"AAAABQAAABkAA21heA=="`;
+
+exports[`RequestHeader null client id 1`] = `"AAMAAAAABAD//w=="`;

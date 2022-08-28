@@ -1,17 +1,22 @@
 import {
+  Acks,
   ErrorCode,
   Int16,
   Int32,
   Int64,
   KafkaArray,
+  NullableString,
   int16Size,
   int32Size,
   int64Size,
+  validAcks,
   validErrorCode,
 } from "src/protocol/common";
 
 // This implementation borrows heavily from the kafkajs Node library:
 // https://github.com/tulios/kafkajs/blob/master/src/protocol/decoder.js
+
+export type EnumPredicate<T extends Int16> = (value: Int16) => value is T;
 
 export class Decoder {
   private readonly view: DataView;
@@ -28,7 +33,7 @@ export class Decoder {
     return value;
   }
 
-  readEnum<T extends Int16>(predicate: (value: Int16) => value is T): T {
+  readEnum<T extends Int16>(predicate: EnumPredicate<T>): T {
     const value = this.readInt16();
     if (!predicate(value)) {
       throw new Error(`Invalid enum value: ${value}`);
@@ -38,6 +43,10 @@ export class Decoder {
 
   readErrorCode(): ErrorCode {
     return this.readEnum(validErrorCode);
+  }
+
+  readAcks(): Acks {
+    return this.readEnum(validAcks);
   }
 
   readInt32(): Int32 {
@@ -52,12 +61,7 @@ export class Decoder {
     return value;
   }
 
-  readString(): string {
-    const size = this.readInt16();
-    if (size === -1) {
-      // I don't think this should ever happen...
-      throw new Error("Unexpected null string!");
-    }
+  private readStringSize(size: number): string {
     const stringBuffer = this.view.buffer.slice(
       this.offset,
       this.offset + size
@@ -65,6 +69,22 @@ export class Decoder {
     const value = new TextDecoder().decode(stringBuffer);
     this.offset += size;
     return value;
+  }
+
+  readString(): string {
+    const size = this.readInt16();
+    if (size === -1) {
+      throw new Error("Unexpected null string!");
+    }
+    return this.readStringSize(size);
+  }
+
+  readNullableString(): NullableString {
+    const size = this.readInt16();
+    if (size === -1) {
+      return null;
+    }
+    return this.readStringSize(size);
   }
 
   readKafkaArray<T>(readElement: (index: number) => T): KafkaArray<T> {

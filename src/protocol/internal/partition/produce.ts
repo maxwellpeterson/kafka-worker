@@ -1,11 +1,4 @@
-import {
-  Acks,
-  ErrorCode,
-  Int32,
-  Int64,
-  validAcks,
-  validErrorCode,
-} from "src/protocol/common";
+import { Acks, ErrorCode, Int32, Int64 } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 
@@ -24,17 +17,18 @@ export const encodePartitionProduceRequest = (
   encoder: Encoder,
   request: PartitionProduceRequest
 ): ArrayBuffer => {
-  encoder.writeInt16(request.acks);
-  encoder.writeInt32(request.messageSetSize);
-  encoder.writeBuffer(request.messageSet);
-  return encoder.buffer();
+  return encoder
+    .writeEnum(request.acks)
+    .writeInt32(request.messageSetSize)
+    .writeBuffer(request.messageSet)
+    .buffer();
 };
 
 export const decodePartitionProduceRequest = (
   decoder: Decoder
 ): PartitionProduceRequest => {
   const request = {
-    acks: decoder.readEnum(validAcks),
+    acks: decoder.readAcks(),
     messageSetSize: decoder.readInt32(),
   };
   return {
@@ -56,16 +50,17 @@ export const encodePartitionProduceResponse = (
   encoder: Encoder,
   response: PartitionProduceResponse
 ): ArrayBuffer => {
-  encoder.writeEnum(response.errorCode);
-  encoder.writeInt64(response.baseOffset);
-  return encoder.buffer();
+  return encoder
+    .writeEnum(response.errorCode)
+    .writeInt64(response.baseOffset)
+    .buffer();
 };
 
 export const decodePartitionProduceResponse = (
   decoder: Decoder
 ): PartitionProduceResponse => {
   return {
-    errorCode: decoder.readEnum(validErrorCode),
+    errorCode: decoder.readErrorCode(),
     baseOffset: decoder.readInt64(),
   };
 };

@@ -11,9 +11,10 @@ import {
   decodeProduceRequest,
   encodeProduceResponse,
 } from "src/protocol/api/produce";
-import { ApiKey, RequestMetadata, validApiKey } from "src/protocol/common";
+import { ApiKey, validApiKey } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
+import { RequestMetadata, decodeRequestHeader } from "src/protocol/header";
 import { RequestManager } from "src/state/client/request-manager";
 import { fetchClusterMetadata } from "src/state/cluster";
 
@@ -33,26 +34,21 @@ export class Session {
 
   async handleRequest(buffer: ArrayBuffer): Promise<ArrayBuffer | null> {
     const decoder = new KafkaRequestDecoder(buffer);
-    const apiKey = decoder.readEnum(validApiKey);
-    const metadata = {
-      apiVersion: decoder.readInt16(),
-      correlationId: decoder.readInt32(),
-      clientId: decoder.readString(),
-    };
+    const header = decodeRequestHeader(decoder, validApiKey);
 
-    if (metadata.apiVersion !== 0) {
+    if (header.apiVersion !== 0) {
       throw new Error(
-        `Unsupported version of api ${apiKey}: expected 0 but got ${metadata.apiVersion}`
+        `Unsupported version of api ${header.apiKey}: expected 0 but got ${header.apiVersion}`
       );
     }
 
-    const encoder = new KafkaResponseEncoder(metadata.correlationId);
+    const encoder = new KafkaResponseEncoder(header.correlationId);
 
-    switch (apiKey) {
+    switch (header.apiKey) {
       case ApiKey.Produce:
-        return this.handleProduceRequest(metadata, decoder, encoder);
+        return this.handleProduceRequest(header, decoder, encoder);
       case ApiKey.Metadata:
-        return this.handleMetadataRequest(metadata, decoder, encoder);
+        return this.handleMetadataRequest(header, decoder, encoder);
     }
   }
 

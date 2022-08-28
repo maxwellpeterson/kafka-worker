@@ -14,13 +14,7 @@ export const int64Size = 8;
 // semantic difference between null and empty arrays, and in these cases we
 // replace null arrays with empty arrays to avoid code pollution from null checks
 export type KafkaArray<T> = T[] | null;
-
-// Fields that appear in the header of every Kafka protocol request
-export interface RequestMetadata {
-  apiVersion: Int16;
-  correlationId: Int32;
-  clientId: string;
-}
+export type NullableString = string | null;
 
 // Returns a type predicate for the given "enum" object (this project doesn't
 // use TypeScript enums). These predicates are useful for decoding arbitrary

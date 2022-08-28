@@ -25,8 +25,9 @@
     "check": "tsc",
     "lint": "eslint .",
     "test": "node --experimental-vm-modules --no-warnings node_modules/jest/bin/jest.js",
-    "start": "wrangler dev",
     "build": "node build.js",
+    "all": "npm run check && npm run lint && npm run test && npm run build",
+    "start": "wrangler dev",
     "deploy": "wrangler publish"
   },
   "dependencies": {

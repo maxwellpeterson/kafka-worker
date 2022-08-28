@@ -1,4 +1,4 @@
-import { Acks, ErrorCode, Int32, Int64, validAcks } from "src/protocol/common";
+import { Acks, ErrorCode, Int32, Int64 } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 
@@ -28,9 +28,9 @@ export interface ProduceRequest {
 
 export const decodeProduceRequest = (decoder: Decoder): ProduceRequest => {
   return {
-    acks: decoder.readEnum(validAcks),
+    acks: decoder.readAcks(),
     timeoutMs: decoder.readInt32(),
-    topics: decoder.readArray(() => decodeTopicData(decoder)),
+    topics: decoder.readArray(decodeTopicData(decoder)),
   };
 };
 
@@ -39,10 +39,10 @@ export interface TopicData {
   partitions: PartitionData[];
 }
 
-const decodeTopicData = (decoder: Decoder): TopicData => {
+const decodeTopicData = (decoder: Decoder) => (): TopicData => {
   return {
     name: decoder.readString(),
-    partitions: decoder.readArray(() => decodePartitionData(decoder)),
+    partitions: decoder.readArray(decodePartitionData(decoder)),
   };
 };
 
@@ -52,7 +52,7 @@ export interface PartitionData {
   messageSet: ArrayBuffer;
 }
 
-const decodePartitionData = (decoder: Decoder): PartitionData => {
+const decodePartitionData = (decoder: Decoder) => (): PartitionData => {
   const data = {
     index: decoder.readInt32(),
     messageSetSize: decoder.readInt32(),
@@ -78,10 +78,9 @@ export const encodeProduceResponse = (
   encoder: Encoder,
   response: ProduceResponse
 ): ArrayBuffer => {
-  encoder.writeArray(response.topics, (topic) =>
-    encodeTopicResponse(encoder, topic)
-  );
-  return encoder.buffer();
+  return encoder
+    .writeArray(response.topics, encodeTopicResponse(encoder))
+    .buffer();
 };
 
 export interface TopicResponse {
@@ -89,12 +88,13 @@ export interface TopicResponse {
   partitions: PartitionResponse[];
 }
 
-const encodeTopicResponse = (encoder: Encoder, topic: TopicResponse) => {
-  encoder.writeString(topic.name);
-  encoder.writeArray(topic.partitions, (partition) =>
-    encodePartitionResponse(encoder, partition)
-  );
-};
+const encodeTopicResponse =
+  (encoder: Encoder) =>
+  (topic: TopicResponse): Encoder => {
+    return encoder
+      .writeString(topic.name)
+      .writeArray(topic.partitions, encodePartitionResponse(encoder));
+  };
 
 export interface PartitionResponse {
   index: Int32;
@@ -102,11 +102,11 @@ export interface PartitionResponse {
   baseOffset: Int64;
 }
 
-const encodePartitionResponse = (
-  encoder: Encoder,
-  partition: PartitionResponse
-) => {
-  encoder.writeInt32(partition.index);
-  encoder.writeEnum(partition.errorCode);
-  encoder.writeInt64(partition.baseOffset);
-};
+const encodePartitionResponse =
+  (encoder: Encoder) =>
+  (partition: PartitionResponse): Encoder => {
+    return encoder
+      .writeInt32(partition.index)
+      .writeEnum(partition.errorCode)
+      .writeInt64(partition.baseOffset);
+  };

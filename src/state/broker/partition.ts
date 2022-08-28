@@ -2,11 +2,11 @@ import { Env, stringify } from "src/common";
 import { Acks, ErrorCode, Int64 } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
+import { RequestMetadata, decodeRequestHeader } from "src/protocol/header";
 import {
   PartitionApiKey,
-  PartitionRequestHeader,
   PartitionResponseEncoder,
-  decodePartitionRequestHeader,
+  validPartitionApiKey,
 } from "src/protocol/internal/partition/common";
 import {
   PartitionProduceResponse,
@@ -41,8 +41,7 @@ export class Partition {
   }
 
   fetch(request: Request): Response {
-    const upgradeHeader = request.headers.get("Upgrade");
-    if (upgradeHeader !== "websocket") {
+    if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("Expected Upgrade: websocket", { status: 426 });
     }
 
@@ -79,7 +78,7 @@ export class Partition {
     buffer: ArrayBuffer
   ): Promise<ArrayBuffer | null> {
     const decoder = new Decoder(buffer);
-    const header = decodePartitionRequestHeader(decoder);
+    const header = decodeRequestHeader(decoder, validPartitionApiKey);
     const encoder = new PartitionResponseEncoder(header.correlationId);
 
     switch (header.apiKey) {
@@ -89,13 +88,11 @@ export class Partition {
   }
 
   private async handleProduceRequest(
-    // TODO: make this metadata, omit correlation id and api key
-    header: PartitionRequestHeader,
+    metadata: RequestMetadata,
     decoder: Decoder,
     encoder: Encoder
   ): Promise<ArrayBuffer | null> {
     const request = decodePartitionProduceRequest(decoder);
-
     const response = await this.appendMessageSet(request.messageSet);
 
     if (request.acks === Acks.None) {

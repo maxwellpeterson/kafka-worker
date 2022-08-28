@@ -1,12 +1,10 @@
 import { Env } from "src/common";
 import { ProduceRequest, ProduceResponse } from "src/protocol/api/produce";
-import { Acks, RequestMetadata } from "src/protocol/common";
+import { Acks } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
-import {
-  PartitionApiKey,
-  encodePartitionRequestHeader,
-} from "src/protocol/internal/partition/common";
+import { RequestMetadata, encodeRequestHeader } from "src/protocol/header";
+import { PartitionApiKey } from "src/protocol/internal/partition/common";
 import { encodePartitionProduceRequest } from "src/protocol/internal/partition/produce";
 import { PartitionInfo } from "src/state/broker/partition";
 import {
@@ -60,7 +58,7 @@ export class RequestManager {
         request.topics.flatMap((topic) =>
           topic.partitions.map(async (partition) => {
             const encoder = new Encoder();
-            encodePartitionRequestHeader(encoder, {
+            encodeRequestHeader(encoder, {
               apiKey: PartitionApiKey.Produce,
               apiVersion: 0,
               correlationId: metadata.correlationId,
