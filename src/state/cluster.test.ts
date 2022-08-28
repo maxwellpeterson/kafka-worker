@@ -1,26 +1,17 @@
-import { Cluster, fetchClusterMetadata } from "src/state/cluster";
-import { mockDOState, mockDOStub, mockEnv } from "src/state/test-utils";
+import { fetchClusterMetadata } from "src/state/cluster";
 
 describe("fetchClusterMetadata", () => {
-  const cluster = new Cluster(mockDOState(), mockEnv());
-
-  const clusterStub = mockDOStub();
-  clusterStub.fetch.mockImplementation((request) =>
-    cluster.fetch(new Request(request))
-  );
-
-  const fetchEnv = mockEnv();
-  fetchEnv.CLUSTER.get.mockImplementation(() => clusterStub);
+  const env = getMiniflareBindings();
 
   test("returns static metadata when fetching all topics", async () => {
-    const response = await fetchClusterMetadata(fetchEnv, []);
+    const response = await fetchClusterMetadata(env, []);
     expect(response).toMatchInlineSnapshot(`
       Object {
         "brokers": Array [
           Object {
-            "host": "example.com",
+            "host": "localhost",
             "nodeId": 333,
-            "port": 443,
+            "port": 8787,
           },
         ],
         "topics": Array [

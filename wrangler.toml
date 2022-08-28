@@ -1,6 +1,9 @@
 name = "kafka-worker"
-main = "src/index.ts"
+main = "dist/index.mjs"
 compatibility_date = "2022-08-21"
+
+[build]
+command = "node build.js"
 
 [vars]
 HOSTNAME="localhost"

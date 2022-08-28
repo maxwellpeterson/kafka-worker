@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { ErrorCode } from "src/protocol/common";
 import { PartitionInfo } from "src/state/broker/partition";
 import {
@@ -117,7 +118,7 @@ describe("IncrementalResponse", () => {
   ];
 
   test.each<TestCase>(cases)("%s", (_name, stub, subresponses, expected) => {
-    const done = jest.fn<undefined, [TestResponse]>();
+    const done = jest.fn<(response: TestResponse) => void>();
     const incremental = new IncrementalResponse(stub, done);
 
     subresponses.forEach((subresponse) => {
@@ -142,7 +143,7 @@ describe("IncrementalResponse", () => {
 
   test("calls done immediately when stub response has no topics", () => {
     const stub = { topics: [] };
-    const done = jest.fn<undefined, [TestResponse]>();
+    const done = jest.fn<(response: TestResponse) => void>();
 
     new IncrementalResponse(stub, done);
     expect(done).toHaveBeenCalledTimes(1);
@@ -153,7 +154,7 @@ describe("IncrementalResponse", () => {
     const stub = {
       topics: [{ name: "topic-one", partitions: [] }],
     };
-    const done = jest.fn<undefined, [TestResponse]>();
+    const done = jest.fn<(response: TestResponse) => void>();
 
     new IncrementalResponse(stub, done);
     expect(done).toHaveBeenCalledTimes(1);
