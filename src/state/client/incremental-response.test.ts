@@ -1,5 +1,4 @@
 import { ErrorCode } from "src/protocol/common";
-import { clone } from "src/protocol/test-utils";
 import { PartitionInfo } from "src/state/broker/partition";
 import {
   IncrementalResponse,
@@ -132,7 +131,7 @@ describe("IncrementalResponse", () => {
     // after receiving more subresponses
 
     const response = done.mock.calls[0][0];
-    const snapshot = clone(response);
+    const snapshot = structuredClone(response) as TestResponse;
 
     subresponses.forEach((subresponse) => {
       incremental.addPartition(...subresponse);
