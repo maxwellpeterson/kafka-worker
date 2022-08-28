@@ -6,17 +6,19 @@ import {
   PartitionResponse,
 } from "src/state/client/incremental-response";
 
-interface TestResponse {
-  topics: {
-    name: string;
-    partitions: {
-      index: number;
-      errorCode: ErrorCode;
-    }[];
-  }[];
-}
-
 describe("IncrementalResponse", () => {
+  const done = jest.fn<(response: TestResponse) => void>();
+
+  interface TestResponse {
+    topics: {
+      name: string;
+      partitions: {
+        index: number;
+        errorCode: ErrorCode;
+      }[];
+    }[];
+  }
+
   type TestCase = [
     string,
     TestResponse,
@@ -118,7 +120,6 @@ describe("IncrementalResponse", () => {
   ];
 
   test.each<TestCase>(cases)("%s", (_name, stub, subresponses, expected) => {
-    const done = jest.fn<(response: TestResponse) => void>();
     const incremental = new IncrementalResponse(stub, done);
 
     subresponses.forEach((subresponse) => {
@@ -143,7 +144,6 @@ describe("IncrementalResponse", () => {
 
   test("calls done immediately when stub response has no topics", () => {
     const stub = { topics: [] };
-    const done = jest.fn<(response: TestResponse) => void>();
 
     new IncrementalResponse(stub, done);
     expect(done).toHaveBeenCalledTimes(1);
@@ -154,7 +154,6 @@ describe("IncrementalResponse", () => {
     const stub = {
       topics: [{ name: "topic-one", partitions: [] }],
     };
-    const done = jest.fn<(response: TestResponse) => void>();
 
     new IncrementalResponse(stub, done);
     expect(done).toHaveBeenCalledTimes(1);

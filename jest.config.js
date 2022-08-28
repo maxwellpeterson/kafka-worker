@@ -20,4 +20,6 @@ export default {
     scriptPath: "dist/index.mjs",
     modules: true,
   },
+  resetMocks: true,
+  clearMocks: true,
 };
