@@ -23,4 +23,6 @@ Kafka 0.8.0 dates all the way back to 2013, which was a much simpler era. There 
 
 Each client connection is handled by a "gateway worker" that runs in the Cloudflare data center (also referred to as "colo") closest to the client's location. The gateway worker handles requests from the client, and makes internal subrequests to partition DOs and the global cluster DO as needed. Each DO contacted by the gateway worker may be located in the same data center as the gateway worker instance (the ideal case), or may be located somewhere else.
 
+## Map
+
 ![kafka worker map](map.png)
