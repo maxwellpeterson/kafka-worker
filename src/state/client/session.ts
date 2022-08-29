@@ -1,20 +1,20 @@
 import { Env, stringify } from "src/common";
-import {
-  KafkaRequestDecoder,
-  KafkaResponseEncoder,
-} from "src/protocol/api/common";
-import {
-  decodeMetadataRequest,
-  encodeMetadataResponse,
-} from "src/protocol/api/metadata";
-import {
-  decodeProduceRequest,
-  encodeProduceResponse,
-} from "src/protocol/api/produce";
 import { ApiKey, validApiKey } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import { RequestMetadata, decodeRequestHeader } from "src/protocol/header";
+import {
+  KafkaRequestDecoder,
+  KafkaResponseEncoder,
+} from "src/protocol/kafka/common";
+import {
+  decodeKafkaMetadataRequest,
+  encodeKafkaMetadataResponse,
+} from "src/protocol/kafka/metadata";
+import {
+  decodeKafkaProduceRequest,
+  encodeKafkaProduceResponse,
+} from "src/protocol/kafka/produce";
 import { RequestManager } from "src/state/client/request-manager";
 import { fetchClusterMetadata } from "src/state/cluster";
 
@@ -57,7 +57,7 @@ export class Session {
     decoder: Decoder,
     encoder: Encoder
   ): Promise<ArrayBuffer | null> {
-    const request = decodeProduceRequest(decoder);
+    const request = decodeKafkaProduceRequest(decoder);
     console.log(`Produce request: ${stringify(request)}`);
 
     const response = await this.internal.produceRequest(metadata, request);
@@ -67,7 +67,7 @@ export class Session {
     if (response === null) {
       return null;
     }
-    return encodeProduceResponse(encoder, response);
+    return encodeKafkaProduceResponse(encoder, response);
   }
 
   private async handleMetadataRequest(
@@ -75,12 +75,12 @@ export class Session {
     decoder: Decoder,
     encoder: Encoder
   ): Promise<ArrayBuffer> {
-    const request = decodeMetadataRequest(decoder);
+    const request = decodeKafkaMetadataRequest(decoder);
     console.log(`Metadata request: ${stringify(request)}`);
 
     const response = await fetchClusterMetadata(this.env, request.topics);
     console.log(`Metadata response: ${stringify(response)}`);
 
-    return encodeMetadataResponse(encoder, response);
+    return encodeKafkaMetadataResponse(encoder, response);
   }
 }

@@ -2,19 +2,19 @@ import { Acks, ErrorCode, Int64 } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 
-// Partition Produce Request (Version: 0) => acks message_set_size message_set
+// Internal Produce Request (Version: 0) => acks message_set_size message_set
 //   acks => INT16
 //   message_set_size => INT32
 //   message_set => BYTES
 
-export interface PartitionProduceRequest {
+export interface InternalProduceRequest {
   acks: Acks;
   messageSet: ArrayBuffer;
 }
 
-export const encodePartitionProduceRequest = (
+export const encodeInternalProduceRequest = (
   encoder: Encoder,
-  request: PartitionProduceRequest
+  request: InternalProduceRequest
 ): ArrayBuffer => {
   return encoder
     .writeEnum(request.acks)
@@ -22,25 +22,25 @@ export const encodePartitionProduceRequest = (
     .buffer();
 };
 
-export const decodePartitionProduceRequest = (
+export const decodeInternalProduceRequest = (
   decoder: Decoder
-): PartitionProduceRequest => ({
+): InternalProduceRequest => ({
   acks: decoder.readAcks(),
   messageSet: decoder.readMessageSet(),
 });
 
-// Partition Produce Response (Version: 0) => error_code base_offset
+// Internal Produce Response (Version: 0) => error_code base_offset
 //   error_code => INT16
 //   base_offset => INT64
 
-export interface PartitionProduceResponse {
+export interface InternalProduceResponse {
   errorCode: ErrorCode;
   baseOffset: Int64;
 }
 
-export const encodePartitionProduceResponse = (
+export const encodeInternalProduceResponse = (
   encoder: Encoder,
-  response: PartitionProduceResponse
+  response: InternalProduceResponse
 ): ArrayBuffer => {
   return encoder
     .writeEnum(response.errorCode)
@@ -48,9 +48,9 @@ export const encodePartitionProduceResponse = (
     .buffer();
 };
 
-export const decodePartitionProduceResponse = (
+export const decodeInternalProduceResponse = (
   decoder: Decoder
-): PartitionProduceResponse => {
+): InternalProduceResponse => {
   return {
     errorCode: decoder.readErrorCode(),
     baseOffset: decoder.readInt64(),

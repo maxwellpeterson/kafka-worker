@@ -1,11 +1,14 @@
 import { Env } from "src/common";
-import { ProduceRequest, ProduceResponse } from "src/protocol/api/produce";
 import { Acks } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import { RequestMetadata, encodeRequestHeader } from "src/protocol/header";
-import { PartitionApiKey } from "src/protocol/internal/partition/common";
-import { encodePartitionProduceRequest } from "src/protocol/internal/partition/produce";
+import { PartitionApiKey } from "src/protocol/internal/common";
+import { encodeInternalProduceRequest } from "src/protocol/internal/produce";
+import {
+  KafkaProduceRequest,
+  KafkaProduceResponse,
+} from "src/protocol/kafka/produce";
 import { PartitionInfo } from "src/state/broker/partition";
 import {
   PendingProduceRequest,
@@ -38,13 +41,13 @@ export class RequestManager {
 
   produceRequest(
     metadata: RequestMetadata,
-    request: ProduceRequest
-  ): Promise<ProduceResponse | null> {
-    return new Promise<ProduceResponse | null>((resolve, reject) => {
+    request: KafkaProduceRequest
+  ): Promise<KafkaProduceResponse | null> {
+    return new Promise<KafkaProduceResponse | null>((resolve, reject) => {
       if (request.acks !== Acks.None) {
         // If the request will return a response, resolve the promise when the
         // response is complete
-        const done = (response: ProduceResponse) => {
+        const done = (response: KafkaProduceResponse) => {
           this.pending.delete(metadata.correlationId);
           resolve(response);
         };
@@ -65,7 +68,7 @@ export class RequestManager {
               clientId: metadata.clientId,
             });
 
-            const partitionRequest = encodePartitionProduceRequest(encoder, {
+            const partitionRequest = encodeInternalProduceRequest(encoder, {
               acks: request.acks,
               messageSet: partition.messageSet,
             });

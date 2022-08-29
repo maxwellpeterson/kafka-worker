@@ -14,7 +14,7 @@ export const PartitionApiKey = {
 export type PartitionApiKey = ValueOf<typeof PartitionApiKey>;
 export const validPartitionApiKey = generateEnumPredicate(PartitionApiKey);
 
-export class PartitionResponseEncoder extends Encoder {
+export class InternalResponseEncoder extends Encoder {
   constructor(correlationId: Int32, initialBufferSize = 64) {
     super(initialBufferSize + int32Size);
     this.writeInt32(correlationId);

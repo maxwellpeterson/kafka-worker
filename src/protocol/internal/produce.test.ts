@@ -2,17 +2,17 @@ import { Acks, ErrorCode } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import {
-  PartitionProduceRequest,
-  PartitionProduceResponse,
-  decodePartitionProduceRequest,
-  decodePartitionProduceResponse,
-  encodePartitionProduceRequest,
-  encodePartitionProduceResponse,
-} from "src/protocol/internal/partition/produce";
+  InternalProduceRequest,
+  InternalProduceResponse,
+  decodeInternalProduceRequest,
+  decodeInternalProduceResponse,
+  encodeInternalProduceRequest,
+  encodeInternalProduceResponse,
+} from "src/protocol/internal/produce";
 import { fillBuffer } from "src/protocol/test-utils";
 
-describe("PartitionProduceRequest", () => {
-  type TestCase = [string, PartitionProduceRequest];
+describe("InternalProduceRequest", () => {
+  type TestCase = [string, InternalProduceRequest];
   const cases: TestCase[] = [
     [
       "baseline request",
@@ -46,17 +46,17 @@ describe("PartitionProduceRequest", () => {
 
   test.each(cases)("%s", (_name, request) => {
     const encoder = new Encoder();
-    const buffer = encodePartitionProduceRequest(encoder, request);
+    const buffer = encodeInternalProduceRequest(encoder, request);
 
     const decoder = new Decoder(buffer);
-    const output = decodePartitionProduceRequest(decoder);
+    const output = decodeInternalProduceRequest(decoder);
 
     expect(request).toEqual(output);
   });
 });
 
-describe("PartitionProduceResponse", () => {
-  type TestCase = [string, PartitionProduceResponse];
+describe("InternalProduceResponse", () => {
+  type TestCase = [string, InternalProduceResponse];
   const cases: TestCase[] = [
     [
       "baseline response",
@@ -67,10 +67,10 @@ describe("PartitionProduceResponse", () => {
 
   test.each(cases)("%s", (_name, response) => {
     const encoder = new Encoder();
-    const buffer = encodePartitionProduceResponse(encoder, response);
+    const buffer = encodeInternalProduceResponse(encoder, response);
 
     const decoder = new Decoder(buffer);
-    const output = decodePartitionProduceResponse(decoder);
+    const output = decodeInternalProduceResponse(decoder);
 
     expect(response).toEqual(output);
   });

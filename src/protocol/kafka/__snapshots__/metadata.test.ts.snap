@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`KafkaMetadataRequest multiple topics 1`] = `"AAAAAwAJdG9waWMtb25lAAl0b3BpYy10d28AC3RvcGljLXRocmVl"`;
+
+exports[`KafkaMetadataRequest no topics 1`] = `"AAAAAA=="`;
+
+exports[`KafkaMetadataRequest one topic 1`] = `"AAAAAQAJdG9waWMtb25l"`;
+
+exports[`KafkaMetadataResponse multi-partition topic 1`] = `"AAAAAQAAAAEAC2V4YW1wbGUuY29tAAABuwAAAAEAAAAJdG9waWMtb25lAAAAAgAAAAAAAQAAAAEAAAAAAAAAAAAAAAAAAgAAAAEAAAAAAAAAAA=="`;
+
+exports[`KafkaMetadataResponse multiple topics 1`] = `"AAAAAQAAAAEAC2V4YW1wbGUuY29tAAABuwAAAAIAAAAJdG9waWMtb25lAAAAAQAAAAAAAQAAAAEAAAAAAAAAAAAAAAl0b3BpYy10d28AAAACAAAAAAABAAAAAQAAAAAAAAAAAAAAAAACAAAAAQAAAAAAAAAA"`;
+
+exports[`KafkaMetadataResponse multiple topics with errors 1`] = `"AAAAAQAAAAEAC2V4YW1wbGUuY29tAAABuwAAAAMAAwAJdG9waWMtb25lAAAAAAADAAl0b3BpYy10d28AAAAAAAAAC3RvcGljLXRocmVlAAAAAgAAAAAAAQAAAAEAAAAAAAAAAAAAAAAAAgAAAAEAAAAAAAAAAA=="`;
+
+exports[`KafkaMetadataResponse no topics 1`] = `"AAAAAQAAAAEAC2V4YW1wbGUuY29tAAABuwAAAAA="`;
+
+exports[`KafkaMetadataResponse single-partition topic 1`] = `"AAAAAQAAAAEAC2V4YW1wbGUuY29tAAABuwAAAAEAAAAJdG9waWMtb25lAAAAAQAAAAAAAQAAAAEAAAAAAAAAAA=="`;

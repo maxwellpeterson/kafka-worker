@@ -20,7 +20,7 @@ import { Encoder } from "src/protocol/encoder";
 //
 // Here we follow the older description of message set (now called record batch).
 
-export interface ProduceRequest {
+export interface KafkaProduceRequest {
   acks: Acks;
   timeoutMs: Int32;
   topics: {
@@ -32,7 +32,9 @@ export interface ProduceRequest {
   }[];
 }
 
-export const decodeProduceRequest = (decoder: Decoder): ProduceRequest => {
+export const decodeKafkaProduceRequest = (
+  decoder: Decoder
+): KafkaProduceRequest => {
   return {
     acks: decoder.readAcks(),
     timeoutMs: decoder.readInt32(),
@@ -56,7 +58,7 @@ export const decodeProduceRequest = (decoder: Decoder): ProduceRequest => {
 //
 // https://kafka.apache.org/protocol.html#The_Messages_Produce
 
-export interface ProduceResponse {
+export interface KafkaProduceResponse {
   topics: {
     name: string;
     partitions: {
@@ -67,9 +69,9 @@ export interface ProduceResponse {
   }[];
 }
 
-export const encodeProduceResponse = (
+export const encodeKafkaProduceResponse = (
   encoder: Encoder,
-  response: ProduceResponse
+  response: KafkaProduceResponse
 ): ArrayBuffer => {
   return encoder
     .writeArray(response.topics, (topic) =>

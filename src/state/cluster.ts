@@ -1,6 +1,6 @@
 import { ElemOf, Env } from "src/common";
-import { MetadataResponse } from "src/protocol/api/metadata";
 import { ErrorCode, Int32 } from "src/protocol/common";
+import { KafkaMetadataResponse } from "src/protocol/kafka/metadata";
 
 const globalClusterName = "global";
 const globalBroker = {
@@ -14,7 +14,7 @@ const sep = ",";
 export const fetchClusterMetadata = async (
   env: Env,
   topics: string[]
-): Promise<MetadataResponse> => {
+): Promise<KafkaMetadataResponse> => {
   const id = env.CLUSTER.idFromName(globalClusterName);
   const obj = env.CLUSTER.get(id);
 
@@ -28,7 +28,7 @@ export const fetchClusterMetadata = async (
     throw new Error(`Error from Cluster DO: ${message}`);
   }
 
-  return await response.json<MetadataResponse>();
+  return await response.json<KafkaMetadataResponse>();
 };
 
 interface ClusterState {
@@ -102,7 +102,7 @@ export class Cluster {
 }
 
 type TopicState = ElemOf<ClusterState["topics"]>;
-type TopicMetadata = ElemOf<MetadataResponse["topics"]>;
+type TopicMetadata = ElemOf<KafkaMetadataResponse["topics"]>;
 
 const generateMetadata = (topic: TopicState): TopicMetadata => ({
   errorCode: ErrorCode.None,

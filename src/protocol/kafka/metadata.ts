@@ -8,18 +8,20 @@ import { Encoder } from "src/protocol/encoder";
 //
 // https://kafka.apache.org/protocol.html#The_Messages_Metadata
 
-export interface MetadataRequest {
+export interface KafkaMetadataRequest {
   topics: string[];
 }
 
-export const encodeMetadataRequest = (
+export const encodeKafkaMetadataRequest = (
   encoder: Encoder,
-  request: MetadataRequest
+  request: KafkaMetadataRequest
 ): ArrayBuffer => {
   return encoder.writeStringArray(request.topics).buffer();
 };
 
-export const decodeMetadataRequest = (decoder: Decoder): MetadataRequest => {
+export const decodeKafkaMetadataRequest = (
+  decoder: Decoder
+): KafkaMetadataRequest => {
   return { topics: decoder.readStringArray() };
 };
 
@@ -40,7 +42,7 @@ export const decodeMetadataRequest = (decoder: Decoder): MetadataRequest => {
 //
 // https://kafka.apache.org/protocol.html#The_Messages_Metadata
 
-export interface MetadataResponse {
+export interface KafkaMetadataResponse {
   brokers: {
     nodeId: Int32;
     host: string;
@@ -59,9 +61,9 @@ export interface MetadataResponse {
   }[];
 }
 
-export const encodeMetadataResponse = (
+export const encodeKafkaMetadataResponse = (
   encoder: Encoder,
-  response: MetadataResponse
+  response: KafkaMetadataResponse
 ): ArrayBuffer => {
   return encoder
     .writeArray(response.brokers, (broker) =>
@@ -86,7 +88,9 @@ export const encodeMetadataResponse = (
     .buffer();
 };
 
-export const decodeMetadataResponse = (decoder: Decoder): MetadataResponse => {
+export const decodeKafkaMetadataResponse = (
+  decoder: Decoder
+): KafkaMetadataResponse => {
   return {
     brokers: decoder.readArray(() => ({
       nodeId: decoder.readInt32(),

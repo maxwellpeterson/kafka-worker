@@ -1,7 +1,10 @@
-import { ProduceRequest, ProduceResponse } from "src/protocol/api/produce";
 import { ErrorCode } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
-import { decodePartitionProduceResponse } from "src/protocol/internal/partition/produce";
+import { decodeInternalProduceResponse } from "src/protocol/internal/produce";
+import {
+  KafkaProduceRequest,
+  KafkaProduceResponse,
+} from "src/protocol/kafka/produce";
 import { PartitionInfo } from "src/state/broker/partition";
 import {
   DoneHandler,
@@ -16,10 +19,13 @@ export interface PendingRequest {
 }
 
 export class PendingProduceRequest {
-  private readonly response: IncrementalResponse<ProduceResponse>;
+  private readonly response: IncrementalResponse<KafkaProduceResponse>;
 
-  constructor(request: ProduceRequest, done: DoneHandler<ProduceResponse>) {
-    const stubResponse: ProduceResponse = {
+  constructor(
+    request: KafkaProduceRequest,
+    done: DoneHandler<KafkaProduceResponse>
+  ) {
+    const stubResponse: KafkaProduceResponse = {
       topics: request.topics.map((topic) => ({
         name: topic.name,
         partitions: topic.partitions.map((partition) => ({
@@ -30,14 +36,14 @@ export class PendingProduceRequest {
       })),
     };
 
-    this.response = new IncrementalResponse<ProduceResponse>(
+    this.response = new IncrementalResponse<KafkaProduceResponse>(
       stubResponse,
       done
     );
   }
 
   handlePartitionMessage(partition: PartitionInfo, decoder: Decoder): void {
-    const response = decodePartitionProduceResponse(decoder);
+    const response = decodeInternalProduceResponse(decoder);
     this.response.addPartition(partition, response);
   }
 }

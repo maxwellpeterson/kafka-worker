@@ -4,15 +4,15 @@ import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import { RequestMetadata, decodeRequestHeader } from "src/protocol/header";
 import {
+  InternalResponseEncoder,
   PartitionApiKey,
-  PartitionResponseEncoder,
   validPartitionApiKey,
-} from "src/protocol/internal/partition/common";
+} from "src/protocol/internal/common";
 import {
-  PartitionProduceResponse,
-  decodePartitionProduceRequest,
-  encodePartitionProduceResponse,
-} from "src/protocol/internal/partition/produce";
+  InternalProduceResponse,
+  decodeInternalProduceRequest,
+  encodeInternalProduceResponse,
+} from "src/protocol/internal/produce";
 import { Chunk, prepareMessageSet } from "src/state/broker/chunk";
 
 export const partitionStubUrl = "https://partition.state";
@@ -79,7 +79,7 @@ export class Partition {
   ): Promise<ArrayBuffer | null> {
     const decoder = new Decoder(buffer);
     const header = decodeRequestHeader(decoder, validPartitionApiKey);
-    const encoder = new PartitionResponseEncoder(header.correlationId);
+    const encoder = new InternalResponseEncoder(header.correlationId);
 
     switch (header.apiKey) {
       case PartitionApiKey.Produce:
@@ -92,18 +92,18 @@ export class Partition {
     decoder: Decoder,
     encoder: Encoder
   ): Promise<ArrayBuffer | null> {
-    const request = decodePartitionProduceRequest(decoder);
+    const request = decodeInternalProduceRequest(decoder);
     const response = await this.appendMessageSet(request.messageSet);
 
     if (request.acks === Acks.None) {
       return null;
     }
-    return encodePartitionProduceResponse(encoder, response);
+    return encodeInternalProduceResponse(encoder, response);
   }
 
   private async appendMessageSet(
     buffer: ArrayBuffer
-  ): Promise<PartitionProduceResponse> {
+  ): Promise<InternalProduceResponse> {
     const cursor =
       (await this.state.storage.get<OffsetInfo>(offsetInfoKey)) ??
       initialOffsetInfo;

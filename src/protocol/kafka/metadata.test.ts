@@ -1,18 +1,18 @@
-import {
-  MetadataRequest,
-  MetadataResponse,
-  decodeMetadataRequest,
-  decodeMetadataResponse,
-  encodeMetadataRequest,
-  encodeMetadataResponse,
-} from "src/protocol/api/metadata";
 import { ErrorCode } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
+import {
+  KafkaMetadataRequest,
+  KafkaMetadataResponse,
+  decodeKafkaMetadataRequest,
+  decodeKafkaMetadataResponse,
+  encodeKafkaMetadataRequest,
+  encodeKafkaMetadataResponse,
+} from "src/protocol/kafka/metadata";
 import { base64 } from "src/protocol/test-utils";
 
-describe("MetadataRequest", () => {
-  type TestCase = [string, MetadataRequest];
+describe("KafkaMetadataRequest", () => {
+  type TestCase = [string, KafkaMetadataRequest];
   const cases: TestCase[] = [
     ["no topics", { topics: [] }],
     ["one topic", { topics: ["topic-one"] }],
@@ -20,19 +20,19 @@ describe("MetadataRequest", () => {
   ];
   test.each(cases)("%s", (_name, request) => {
     const encoder = new Encoder();
-    const buffer = encodeMetadataRequest(encoder, request);
+    const buffer = encodeKafkaMetadataRequest(encoder, request);
 
     expect(base64(buffer)).toMatchSnapshot();
 
     const decoder = new Decoder(buffer);
-    const decoded = decodeMetadataRequest(decoder);
+    const decoded = decodeKafkaMetadataRequest(decoder);
 
     expect(request).toEqual(decoded);
   });
 });
 
-describe("MetadataResponse", () => {
-  type TestCase = [string, MetadataResponse];
+describe("KafkaMetadataResponse", () => {
+  type TestCase = [string, KafkaMetadataResponse];
   const cases: TestCase[] = [
     [
       "no topics",
@@ -173,12 +173,12 @@ describe("MetadataResponse", () => {
 
   test.each(cases)("%s", (_name, response) => {
     const encoder = new Encoder();
-    const buffer = encodeMetadataResponse(encoder, response);
+    const buffer = encodeKafkaMetadataResponse(encoder, response);
 
     expect(base64(buffer)).toMatchSnapshot();
 
     const decoder = new Decoder(buffer);
-    const decoded = decodeMetadataResponse(decoder);
+    const decoded = decodeKafkaMetadataResponse(decoder);
 
     expect(response).toEqual(decoded);
   });
