@@ -11,3 +11,7 @@ The `state` folder contains files related to persistent state stored in Durable 
 The `common.ts` file contains general-purpose types and functions that are used across the entire project.
 
 The `index.ts` file contains the entrypoint to the gateway worker, which creates WebSocket connections with clients and sets up a new session for each connection. All messages exchanged with the client flow through the `fetch` handler in this file. The high-level code path for handling a Kafka API request is `index.ts` :arrow_right: `client` :arrow_right: `state` :arrow_right: `client` :arrow_right: `index.ts`, with code from the `protocol` folder used in both `client` and `state`.
+
+## Map
+
+![kafka worker map](map.png)
