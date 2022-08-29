@@ -1,3 +1,4 @@
+import { RequestManager } from "src/client/request-manager";
 import { Env, stringify } from "src/common";
 import { ApiKey, validApiKey } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
@@ -15,7 +16,6 @@ import {
   decodeKafkaProduceRequest,
   encodeKafkaProduceResponse,
 } from "src/protocol/kafka/produce";
-import { RequestManager } from "src/state/client/request-manager";
 import { fetchClusterMetadata } from "src/state/cluster";
 
 // Coordinator class that handles one client connection and forwards incoming

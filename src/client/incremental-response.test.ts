@@ -1,10 +1,10 @@
 import { jest } from "@jest/globals";
-import { ErrorCode } from "src/protocol/common";
-import { PartitionInfo } from "src/state/broker/partition";
 import {
   IncrementalResponse,
   PartitionResponse,
-} from "src/state/client/incremental-response";
+} from "src/client/incremental-response";
+import { ErrorCode } from "src/protocol/common";
+import { PartitionInfo } from "src/state/partition";
 
 describe("IncrementalResponse", () => {
   const done = jest.fn<(response: TestResponse) => void>();

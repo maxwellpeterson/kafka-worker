@@ -1,3 +1,7 @@
+import {
+  DoneHandler,
+  IncrementalResponse,
+} from "src/client/incremental-response";
 import { ErrorCode } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { decodeInternalProduceResponse } from "src/protocol/internal/produce";
@@ -5,11 +9,7 @@ import {
   KafkaProduceRequest,
   KafkaProduceResponse,
 } from "src/protocol/kafka/produce";
-import { PartitionInfo } from "src/state/broker/partition";
-import {
-  DoneHandler,
-  IncrementalResponse,
-} from "src/state/client/incremental-response";
+import { PartitionInfo } from "src/state/partition";
 
 // Represents a client request that is waiting on subresponses from Partition
 // DOs. These subresponses arrive asynchronously as WebSocket messages, and need

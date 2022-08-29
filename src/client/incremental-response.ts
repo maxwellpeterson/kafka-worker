@@ -1,5 +1,5 @@
 import { ElemOf } from "src/common";
-import { PartitionInfo } from "src/state/broker/partition";
+import { PartitionInfo } from "src/state/partition";
 
 // This is an extremely common response structure in the Kafka protocol
 interface BaseResponse {

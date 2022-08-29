@@ -1,3 +1,8 @@
+import {
+  PendingProduceRequest,
+  PendingRequest,
+} from "src/client/pending-request";
+import { SocketManager } from "src/client/socket-manager";
 import { Env } from "src/common";
 import { Acks } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
@@ -9,12 +14,7 @@ import {
   KafkaProduceRequest,
   KafkaProduceResponse,
 } from "src/protocol/kafka/produce";
-import { PartitionInfo } from "src/state/broker/partition";
-import {
-  PendingProduceRequest,
-  PendingRequest,
-} from "src/state/client/pending-request";
-import { SocketManager } from "src/state/client/socket-manager";
+import { PartitionInfo } from "src/state/partition";
 
 type CorrelationId = number;
 

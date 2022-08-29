@@ -13,7 +13,7 @@ import {
   decodeInternalProduceRequest,
   encodeInternalProduceResponse,
 } from "src/protocol/internal/produce";
-import { Chunk, prepareMessageSet } from "src/state/broker/chunk";
+import { Chunk, prepareMessageSet } from "src/state/chunk";
 
 export const partitionStubUrl = "https://partition.state";
 

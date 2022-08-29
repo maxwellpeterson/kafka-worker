@@ -1,8 +1,8 @@
+import { Session } from "src/client/session";
 import { Env } from "src/common";
-import { Session } from "src/state/client/session";
 
 export { Cluster } from "src/state/cluster";
-export { Partition } from "src/state/broker/partition";
+export { Partition } from "src/state/partition";
 
 export default {
   fetch(request: Request, env: Env): Response {
