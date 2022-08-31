@@ -4,10 +4,7 @@ import { ApiKey, validApiKey } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import { RequestMetadata, decodeRequestHeader } from "src/protocol/header";
-import {
-  KafkaRequestDecoder,
-  KafkaResponseEncoder,
-} from "src/protocol/kafka/common";
+import { KafkaDecoder, KafkaResponseEncoder } from "src/protocol/kafka/common";
 import {
   decodeKafkaMetadataRequest,
   encodeKafkaMetadataResponse,
@@ -33,7 +30,7 @@ export class Session {
   }
 
   async handleRequest(buffer: ArrayBuffer): Promise<ArrayBuffer | null> {
-    const decoder = new KafkaRequestDecoder(buffer);
+    const decoder = new KafkaDecoder(buffer);
     const header = decodeRequestHeader(decoder, validApiKey);
 
     if (header.apiVersion !== 0) {

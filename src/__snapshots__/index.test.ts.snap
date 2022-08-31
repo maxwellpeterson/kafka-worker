@@ -1,0 +1,114 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Metadata API fetch all topics 1`] = `"AAAAQwAAAAUAAAABAAABTQAJbG9jYWxob3N0AAAiUwAAAAEAAAAKdGVzdC10b3BpYwAAAAEAAAAAA+cAAAFNAAAAAAAAAAA="`;
+
+exports[`Metadata API fetch all topics 2`] = `
+Object {
+  "brokers": Array [
+    Object {
+      "host": "localhost",
+      "nodeId": 333,
+      "port": 8787,
+    },
+  ],
+  "topics": Array [
+    Object {
+      "errorCode": 0,
+      "name": "test-topic",
+      "partitions": Array [
+        Object {
+          "errorCode": 0,
+          "isrNodes": Array [],
+          "leaderId": 333,
+          "partitionIndex": 999,
+          "replicaNodes": Array [],
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`Metadata API fetch nonexistent topic 1`] = `"AAAAMgAAAAUAAAABAAABTQAJbG9jYWxob3N0AAAiUwAAAAEAAwALb3RoZXItdG9waWMAAAAA"`;
+
+exports[`Metadata API fetch nonexistent topic 2`] = `
+Object {
+  "brokers": Array [
+    Object {
+      "host": "localhost",
+      "nodeId": 333,
+      "port": 8787,
+    },
+  ],
+  "topics": Array [
+    Object {
+      "errorCode": 3,
+      "name": "other-topic",
+      "partitions": Array [],
+    },
+  ],
+}
+`;
+
+exports[`Metadata API fetch specific topic 1`] = `"AAAAQwAAAAUAAAABAAABTQAJbG9jYWxob3N0AAAiUwAAAAEAAAAKdGVzdC10b3BpYwAAAAEAAAAAA+cAAAFNAAAAAAAAAAA="`;
+
+exports[`Metadata API fetch specific topic 2`] = `
+Object {
+  "brokers": Array [
+    Object {
+      "host": "localhost",
+      "nodeId": 333,
+      "port": 8787,
+    },
+  ],
+  "topics": Array [
+    Object {
+      "errorCode": 0,
+      "name": "test-topic",
+      "partitions": Array [
+        Object {
+          "errorCode": 0,
+          "isrNodes": Array [],
+          "leaderId": 333,
+          "partitionIndex": 999,
+          "replicaNodes": Array [],
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`Metadata API fetch specific topic and nonexistent topic 1`] = `"AAAAVgAAAAUAAAABAAABTQAJbG9jYWxob3N0AAAiUwAAAAIAAAAKdGVzdC10b3BpYwAAAAEAAAAAA+cAAAFNAAAAAAAAAAAAAwALb3RoZXItdG9waWMAAAAA"`;
+
+exports[`Metadata API fetch specific topic and nonexistent topic 2`] = `
+Object {
+  "brokers": Array [
+    Object {
+      "host": "localhost",
+      "nodeId": 333,
+      "port": 8787,
+    },
+  ],
+  "topics": Array [
+    Object {
+      "errorCode": 0,
+      "name": "test-topic",
+      "partitions": Array [
+        Object {
+          "errorCode": 0,
+          "isrNodes": Array [],
+          "leaderId": 333,
+          "partitionIndex": 999,
+          "replicaNodes": Array [],
+        },
+      ],
+    },
+    Object {
+      "errorCode": 3,
+      "name": "other-topic",
+      "partitions": Array [],
+    },
+  ],
+}
+`;
