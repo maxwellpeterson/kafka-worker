@@ -23,6 +23,12 @@ Kafka 0.8.0 dates all the way back to 2013, which was a much simpler era. There 
 
 Each client connection is handled by a "gateway worker" that runs in the Cloudflare data center (also referred to as "colo") closest to the client's location. The gateway worker handles requests from the client, and makes internal subrequests to partition DOs and the global cluster DO as needed. Each DO contacted by the gateway worker may be located in the same data center as the gateway worker instance (the ideal case), or may be located somewhere else.
 
+### What about replication? What about leadership election?
+
+There is none, at least not in the application code. The point of using Durable Objects here is that we can offload these complexities onto the infrastructure layer, and keep our application code focused and minimal. As described in the [initial blog post](https://blog.cloudflare.com/introducing-workers-durable-objects/), this is the serverless philosophy applied to persistent state. Replication and strong consistency mechanisms are implemented internally, and all we need to do is use the Durable Object API to reap these benefits. Building a Kafka broker without implementing replication and leadership election feels like cheating, but also makes this a much more tractable project.
+
+In this design, each deployment has one logical broker than spans Cloudflare's entire network. The hostname and port of this broker is the hostname and port of the gateway worker. Translated to the traditional Kafka model, this broker is the leader node for all partitions, and all partitions have zero replica nodes and zero ISR nodes.
+
 ## Map
 
 ![kafka worker map](map.png)
