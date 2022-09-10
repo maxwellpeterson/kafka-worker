@@ -32,6 +32,25 @@ export interface KafkaProduceRequest {
   }[];
 }
 
+export const encodeKafkaProduceRequest = (
+  encoder: Encoder,
+  request: KafkaProduceRequest
+): ArrayBuffer => {
+  return encoder
+    .writeEnum(request.acks)
+    .writeInt32(request.timeoutMs)
+    .writeArray(request.topics, (topic) =>
+      encoder
+        .writeString(topic.name)
+        .writeArray(topic.partitions, (partition) =>
+          encoder
+            .writeInt32(partition.index)
+            .writeMessageSet(partition.messageSet)
+        )
+    )
+    .buffer();
+};
+
 export const decodeKafkaProduceRequest = (
   decoder: Decoder
 ): KafkaProduceRequest => {
@@ -85,4 +104,19 @@ export const encodeKafkaProduceResponse = (
         )
     )
     .buffer();
+};
+
+export const decodeKafkaProduceResponse = (
+  decoder: Decoder
+): KafkaProduceResponse => {
+  return {
+    topics: decoder.readArray(() => ({
+      name: decoder.readString(),
+      partitions: decoder.readArray(() => ({
+        index: decoder.readInt32(),
+        errorCode: decoder.readErrorCode(),
+        baseOffset: decoder.readInt64(),
+      })),
+    })),
+  };
 };
