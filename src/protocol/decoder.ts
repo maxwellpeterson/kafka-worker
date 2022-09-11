@@ -5,6 +5,7 @@ import {
   Int32,
   Int64,
   KafkaArray,
+  MessageSet,
   NullableString,
   int16Size,
   int32Size,
@@ -113,14 +114,14 @@ export class Decoder {
     return this.readArray(() => this.readString());
   }
 
-  private readBuffer(size: Int32): ArrayBuffer {
-    const buffer = this.view.buffer.slice(this.offset, this.offset + size);
+  private readSlice(size: Int32): Uint8Array {
+    const slice = new Uint8Array(this.view.buffer, this.offset, size);
     this.offset += size;
-    return buffer;
+    return slice;
   }
 
-  readMessageSet(): ArrayBuffer {
+  readMessageSet(): MessageSet {
     const size = this.readInt32();
-    return this.readBuffer(size);
+    return this.readSlice(size);
   }
 }

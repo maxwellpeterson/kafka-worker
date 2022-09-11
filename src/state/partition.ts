@@ -1,5 +1,5 @@
 import { Env, stringify } from "src/common";
-import { Acks, ErrorCode, Int64 } from "src/protocol/common";
+import { Acks, ErrorCode, Int64, MessageSet } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import { RequestMetadata, decodeRequestHeader } from "src/protocol/header";
@@ -102,7 +102,7 @@ export class Partition {
   }
 
   private async appendMessageSet(
-    buffer: ArrayBuffer
+    messageSet: MessageSet
   ): Promise<InternalProduceResponse> {
     const cursor =
       (await this.state.storage.get<OffsetInfo>(offsetInfoKey)) ??
@@ -110,7 +110,7 @@ export class Partition {
     console.log(`[Partition DO] Cursor: ${stringify(cursor)}`);
     const baseOffset = cursor.nextOffset;
 
-    const filler = prepareMessageSet(buffer, cursor.nextOffset);
+    const filler = prepareMessageSet(messageSet, cursor.nextOffset);
     const currentChunk = await this.getCurrentChunk(cursor);
     console.log(`[Partition DO] Chunk: ${stringify(currentChunk)}`);
 

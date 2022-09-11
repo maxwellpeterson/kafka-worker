@@ -15,6 +15,7 @@ export const int64Size = 8;
 // replace null arrays with empty arrays to avoid code pollution from null checks
 export type KafkaArray<T> = T[] | null;
 export type NullableString = string | null;
+export type MessageSet = Uint8Array;
 
 // Returns a type predicate for the given "enum" object (this project doesn't
 // use TypeScript enums). These predicates are useful for decoding arbitrary

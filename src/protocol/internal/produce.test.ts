@@ -9,7 +9,7 @@ import {
   encodeInternalProduceRequest,
   encodeInternalProduceResponse,
 } from "src/protocol/internal/produce";
-import { fillBuffer } from "src/protocol/test-utils";
+import { fillMessageSet } from "src/protocol/test-utils";
 
 describe("InternalProduceRequest", () => {
   type TestCase = [string, InternalProduceRequest];
@@ -18,28 +18,28 @@ describe("InternalProduceRequest", () => {
       "baseline request",
       {
         acks: Acks.Leader,
-        messageSet: fillBuffer(64),
+        messageSet: fillMessageSet(64),
       },
     ],
     [
       "no acks",
       {
         acks: Acks.None,
-        messageSet: fillBuffer(100),
+        messageSet: fillMessageSet(100),
       },
     ],
     [
       "full isr acks",
       {
         acks: Acks.FullISR,
-        messageSet: fillBuffer(37),
+        messageSet: fillMessageSet(37),
       },
     ],
     [
       "empty message set",
       {
         acks: Acks.Leader,
-        messageSet: new ArrayBuffer(0),
+        messageSet: fillMessageSet(0),
       },
     ],
   ];

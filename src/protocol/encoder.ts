@@ -3,6 +3,7 @@ import {
   Int32,
   Int64,
   KafkaArray,
+  MessageSet,
   NullableString,
   int16Size,
   int32Size,
@@ -94,16 +95,16 @@ export class Encoder {
     return this.writeArray(values, (value) => this.writeString(value));
   }
 
-  private writeBuffer(buffer: ArrayBuffer): this {
-    this.checkCapacity(buffer.byteLength);
-    new Uint8Array(this.view.buffer).set(new Uint8Array(buffer), this.offset);
-    this.offset += buffer.byteLength;
+  private writeSlice(slice: Uint8Array): this {
+    this.checkCapacity(slice.length);
+    new Uint8Array(this.view.buffer).set(slice, this.offset);
+    this.offset += slice.length;
     return this;
   }
 
-  writeMessageSet(buffer: ArrayBuffer): this {
-    this.writeInt32(buffer.byteLength);
-    return this.writeBuffer(buffer);
+  writeMessageSet(messageSet: MessageSet): this {
+    this.writeInt32(messageSet.length);
+    return this.writeSlice(messageSet);
   }
 
   buffer(): ArrayBuffer {

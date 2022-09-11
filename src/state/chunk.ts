@@ -1,4 +1,4 @@
-import { Int64, int32Size, int64Size } from "src/protocol/common";
+import { Int64, MessageSet, int32Size, int64Size } from "src/protocol/common";
 
 export interface Chunk {
   offsetStart: Int64;
@@ -11,10 +11,10 @@ export type MessageFrame = [number, number];
 
 // TODO: This should be able to return an error code
 export const prepareMessageSet = (
-  buffer: ArrayBuffer,
+  messageSet: MessageSet,
   initialOffset: Int64
 ): ChunkFiller => {
-  const view = new DataView(buffer);
+  const view = new DataView(messageSet);
   const frames: MessageFrame[] = [];
 
   let nextOffset = initialOffset;
@@ -37,17 +37,15 @@ export const prepareMessageSet = (
     // TODO: CRC check!
   }
 
-  return new ChunkFiller(buffer, frames);
+  return new ChunkFiller(messageSet, frames);
 };
 
-// TODO: Might want to wrap the ArrayBuffer in a Uint8Array and use subarray()
-// instead of slice() to avoid a bunch of copies/allocations?
 class ChunkFiller {
-  private buffer: ArrayBuffer;
+  private messageSet: MessageSet;
   private frames: MessageFrame[];
 
-  constructor(buffer: ArrayBuffer, frames: MessageFrame[]) {
-    this.buffer = buffer;
+  constructor(messageSet: MessageSet, frames: MessageFrame[]) {
+    this.messageSet = messageSet;
     this.frames = frames;
   }
 
@@ -69,7 +67,7 @@ class ChunkFiller {
 
     // Copy message data into chunk, including framing information
     new Uint8Array(chunk.buffer).set(
-      new Uint8Array(this.buffer.slice(0, copySize)),
+      this.messageSet.subarray(0, copySize),
       chunk.nextIndex
     );
     chunk.frames.push(
@@ -81,7 +79,7 @@ class ChunkFiller {
     chunk.nextIndex += copySize;
 
     // Delete message data and framing information that was copied into chunk
-    this.buffer = this.buffer.slice(copySize);
+    this.messageSet = this.messageSet.subarray(copySize);
     this.frames = this.frames
       .slice(frameCount)
       // Reindex message frames based on trimmed buffer

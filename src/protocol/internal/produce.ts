@@ -1,4 +1,4 @@
-import { Acks, ErrorCode, Int64 } from "src/protocol/common";
+import { Acks, ErrorCode, Int64, MessageSet } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 
@@ -9,7 +9,7 @@ import { Encoder } from "src/protocol/encoder";
 
 export interface InternalProduceRequest {
   acks: Acks;
-  messageSet: ArrayBuffer;
+  messageSet: MessageSet;
 }
 
 export const encodeInternalProduceRequest = (

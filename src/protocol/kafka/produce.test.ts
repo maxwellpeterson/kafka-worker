@@ -9,7 +9,7 @@ import {
   encodeKafkaProduceRequest,
   encodeKafkaProduceResponse,
 } from "src/protocol/kafka/produce";
-import { base64, fillBuffer } from "src/protocol/test-utils";
+import { base64, fillMessageSet } from "src/protocol/test-utils";
 
 describe("KafkaProduceRequest", () => {
   type TestCase = [string, KafkaProduceRequest];
@@ -25,7 +25,7 @@ describe("KafkaProduceRequest", () => {
             partitions: [
               {
                 index: 1,
-                messageSet: fillBuffer(64),
+                messageSet: fillMessageSet(64),
               },
             ],
           },
@@ -43,11 +43,11 @@ describe("KafkaProduceRequest", () => {
             partitions: [
               {
                 index: 2,
-                messageSet: fillBuffer(47),
+                messageSet: fillMessageSet(47),
               },
               {
                 index: 4,
-                messageSet: fillBuffer(99),
+                messageSet: fillMessageSet(99),
               },
             ],
           },
@@ -56,7 +56,7 @@ describe("KafkaProduceRequest", () => {
             partitions: [
               {
                 index: 5,
-                messageSet: fillBuffer(206),
+                messageSet: fillMessageSet(206),
               },
             ],
           },
@@ -74,7 +74,7 @@ describe("KafkaProduceRequest", () => {
             partitions: [
               {
                 index: 7,
-                messageSet: fillBuffer(15),
+                messageSet: fillMessageSet(15),
               },
             ],
           },

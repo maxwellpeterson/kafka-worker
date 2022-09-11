@@ -1,4 +1,4 @@
-import { Acks, ErrorCode, Int32, Int64 } from "src/protocol/common";
+import { Acks, ErrorCode, Int32, Int64, MessageSet } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 
@@ -27,7 +27,7 @@ export interface KafkaProduceRequest {
     name: string;
     partitions: {
       index: Int32;
-      messageSet: ArrayBuffer;
+      messageSet: MessageSet;
     }[];
   }[];
 }
