@@ -24,10 +24,10 @@
   "scripts": {
     "check": "tsc",
     "lint": "eslint .",
-    "test": "node --experimental-vm-modules --no-warnings node_modules/jest/bin/jest.js",
+    "test": "npm run build && node --experimental-vm-modules --no-warnings node_modules/jest/bin/jest.js",
     "build": "node build.js",
-    "all": "npm run check && npm run lint && npm run test && npm run build",
-    "start": "wrangler dev",
+    "all": "npm run check && npm run lint && npm run test",
+    "start": "wrangler dev --local",
     "deploy": "wrangler publish"
   },
   "dependencies": {
