@@ -1,8 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Metadata API fetch all topics 1`] = `"AAAAQwAAAAUAAAABAAABTQAJbG9jYWxob3N0AAAiUwAAAAEAAAAKdGVzdC10b3BpYwAAAAEAAAAAA+cAAAFNAAAAAAAAAAA="`;
+exports[`Kafka API metadata: fetch all topics 1`] = `"AAAAQwAAAAUAAAABAAABTQAJbG9jYWxob3N0AAAiUwAAAAEAAAAKdGVzdC10b3BpYwAAAAEAAAAAAAAAAAFNAAAAAAAAAAA="`;
 
-exports[`Metadata API fetch all topics 2`] = `
+exports[`Kafka API metadata: fetch all topics 2`] = `
 Object {
   "brokers": Array [
     Object {
@@ -20,7 +20,7 @@ Object {
           "errorCode": 0,
           "isrNodes": Array [],
           "leaderId": 333,
-          "partitionIndex": 999,
+          "partitionIndex": 0,
           "replicaNodes": Array [],
         },
       ],
@@ -29,9 +29,9 @@ Object {
 }
 `;
 
-exports[`Metadata API fetch nonexistent topic 1`] = `"AAAAMgAAAAUAAAABAAABTQAJbG9jYWxob3N0AAAiUwAAAAEAAwALb3RoZXItdG9waWMAAAAA"`;
+exports[`Kafka API metadata: fetch nonexistent topic 1`] = `"AAAAMgAAAAUAAAABAAABTQAJbG9jYWxob3N0AAAiUwAAAAEAAwALb3RoZXItdG9waWMAAAAA"`;
 
-exports[`Metadata API fetch nonexistent topic 2`] = `
+exports[`Kafka API metadata: fetch nonexistent topic 2`] = `
 Object {
   "brokers": Array [
     Object {
@@ -50,9 +50,9 @@ Object {
 }
 `;
 
-exports[`Metadata API fetch specific topic 1`] = `"AAAAQwAAAAUAAAABAAABTQAJbG9jYWxob3N0AAAiUwAAAAEAAAAKdGVzdC10b3BpYwAAAAEAAAAAA+cAAAFNAAAAAAAAAAA="`;
+exports[`Kafka API metadata: fetch specific topic 1`] = `"AAAAQwAAAAUAAAABAAABTQAJbG9jYWxob3N0AAAiUwAAAAEAAAAKdGVzdC10b3BpYwAAAAEAAAAAAAAAAAFNAAAAAAAAAAA="`;
 
-exports[`Metadata API fetch specific topic 2`] = `
+exports[`Kafka API metadata: fetch specific topic 2`] = `
 Object {
   "brokers": Array [
     Object {
@@ -70,7 +70,7 @@ Object {
           "errorCode": 0,
           "isrNodes": Array [],
           "leaderId": 333,
-          "partitionIndex": 999,
+          "partitionIndex": 0,
           "replicaNodes": Array [],
         },
       ],
@@ -79,9 +79,9 @@ Object {
 }
 `;
 
-exports[`Metadata API fetch specific topic and nonexistent topic 1`] = `"AAAAVgAAAAUAAAABAAABTQAJbG9jYWxob3N0AAAiUwAAAAIAAAAKdGVzdC10b3BpYwAAAAEAAAAAA+cAAAFNAAAAAAAAAAAAAwALb3RoZXItdG9waWMAAAAA"`;
+exports[`Kafka API metadata: fetch specific topic and nonexistent topic 1`] = `"AAAAVgAAAAUAAAABAAABTQAJbG9jYWxob3N0AAAiUwAAAAIAAAAKdGVzdC10b3BpYwAAAAEAAAAAAAAAAAFNAAAAAAAAAAAAAwALb3RoZXItdG9waWMAAAAA"`;
 
-exports[`Metadata API fetch specific topic and nonexistent topic 2`] = `
+exports[`Kafka API metadata: fetch specific topic and nonexistent topic 2`] = `
 Object {
   "brokers": Array [
     Object {
@@ -99,7 +99,7 @@ Object {
           "errorCode": 0,
           "isrNodes": Array [],
           "leaderId": 333,
-          "partitionIndex": 999,
+          "partitionIndex": 0,
           "replicaNodes": Array [],
         },
       ],
@@ -108,6 +108,63 @@ Object {
       "errorCode": 3,
       "name": "other-topic",
       "partitions": Array [],
+    },
+  ],
+}
+`;
+
+exports[`Kafka API produce: send multiple message batches to one partiton 1`] = `"AAAAJwAAAAUAAAABAAtvdGhlci10b3BpYwAAAAEAAAPnAAAAAAAAAAAAAA=="`;
+
+exports[`Kafka API produce: send multiple message batches to one partiton 2`] = `
+Object {
+  "topics": Array [
+    Object {
+      "name": "other-topic",
+      "partitions": Array [
+        Object {
+          "baseOffset": 0n,
+          "errorCode": 0,
+          "index": 999,
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`Kafka API produce: send multiple message batches to one partiton 3`] = `"AAAAJwAAAAYAAAABAAtvdGhlci10b3BpYwAAAAEAAAPnAAAAAAAAAAAAAw=="`;
+
+exports[`Kafka API produce: send multiple message batches to one partiton 4`] = `
+Object {
+  "topics": Array [
+    Object {
+      "name": "other-topic",
+      "partitions": Array [
+        Object {
+          "baseOffset": 3n,
+          "errorCode": 0,
+          "index": 999,
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`Kafka API produce: send one message to one partiton 1`] = `"AAAAJgAAAAUAAAABAAp0ZXN0LXRvcGljAAAAAQAAAU0AAAAAAAAAAAAA"`;
+
+exports[`Kafka API produce: send one message to one partiton 2`] = `
+Object {
+  "topics": Array [
+    Object {
+      "name": "test-topic",
+      "partitions": Array [
+        Object {
+          "baseOffset": 0n,
+          "errorCode": 0,
+          "index": 333,
+        },
+      ],
     },
   ],
 }

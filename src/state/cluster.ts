@@ -40,7 +40,7 @@ interface ClusterState {
   }[];
 }
 const initialClusterState: ClusterState = {
-  topics: [{ name: "test-topic", partitions: [{ index: 999 }] }],
+  topics: [{ name: "test-topic", partitions: [{ index: 0 }] }],
 };
 const clusterStateKey = "cluster-state";
 

@@ -25,7 +25,7 @@ describe("KafkaProduceRequest", () => {
             partitions: [
               {
                 index: 1,
-                messageSet: fillMessageSet(64),
+                messageSet: fillMessageSet(2),
               },
             ],
           },
@@ -43,11 +43,11 @@ describe("KafkaProduceRequest", () => {
             partitions: [
               {
                 index: 2,
-                messageSet: fillMessageSet(47),
+                messageSet: fillMessageSet(3),
               },
               {
                 index: 4,
-                messageSet: fillMessageSet(99),
+                messageSet: fillMessageSet(1),
               },
             ],
           },
@@ -56,7 +56,7 @@ describe("KafkaProduceRequest", () => {
             partitions: [
               {
                 index: 5,
-                messageSet: fillMessageSet(206),
+                messageSet: fillMessageSet(2),
               },
             ],
           },
@@ -74,7 +74,7 @@ describe("KafkaProduceRequest", () => {
             partitions: [
               {
                 index: 7,
-                messageSet: fillMessageSet(15),
+                messageSet: fillMessageSet(2),
               },
             ],
           },

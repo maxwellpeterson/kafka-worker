@@ -1,11 +1,13 @@
 import { ValueOf } from "src/common";
 
 // These don't add type safety, but help with labeling
+export type Int8 = number;
 export type Int16 = number;
 export type Int32 = number;
 // This one does add some type safety
 export type Int64 = bigint;
 
+export const int8Size = 1;
 export const int16Size = 2;
 export const int32Size = 4;
 export const int64Size = 8;

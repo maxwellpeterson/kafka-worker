@@ -1,13 +1,18 @@
 import handler from "src/index";
-import { ApiKey, Int32 } from "src/protocol/common";
+import { Acks, ApiKey, Int32 } from "src/protocol/common";
 import { KafkaDecoder, KafkaRequestEncoder } from "src/protocol/kafka/common";
 import {
   KafkaMetadataResponse,
   decodeKafkaMetadataResponse,
   encodeKafkaMetadataRequest,
 } from "src/protocol/kafka/metadata";
-import { KafkaProduceResponse } from "src/protocol/kafka/produce";
-import { base64 } from "src/protocol/test-utils";
+import {
+  KafkaProduceRequest,
+  KafkaProduceResponse,
+  decodeKafkaProduceResponse,
+  encodeKafkaProduceRequest,
+} from "src/protocol/kafka/produce";
+import { base64, fillMessageSet } from "src/protocol/test-utils";
 import { Decoder } from "./protocol/decoder";
 
 class GatewayConn {
@@ -82,7 +87,7 @@ class GatewayConn {
 
 type DecodeFunc<T> = (decoder: Decoder) => T;
 type RequestResponse<T> = [Int32, ArrayBuffer, DecodeFunc<T>];
-type TestCase<T> = [string, RequestResponse<T>[]];
+type TestCase<T> = [string, string, RequestResponse<T>[]];
 
 const makeMetadataPair = (
   correlationId: Int32,
@@ -100,18 +105,71 @@ const makeMetadataPair = (
   return [correlationId, request, decodeKafkaMetadataResponse];
 };
 
-describe("Metadata API", () => {
+const makeProducePair = (
+  correlationId: Int32,
+  topics: KafkaProduceRequest["topics"]
+): RequestResponse<KafkaProduceResponse> => {
+  const encoder = new KafkaRequestEncoder({
+    apiKey: ApiKey.Produce,
+    apiVersion: 0,
+    correlationId,
+    clientId: null,
+  });
+  const request = encodeKafkaProduceRequest(encoder, {
+    acks: Acks.Leader,
+    timeoutMs: 100,
+    topics,
+  });
+  return [correlationId, request, decodeKafkaProduceResponse];
+};
+
+describe("Kafka API", () => {
   const cases: TestCase<KafkaMetadataResponse | KafkaProduceResponse>[] = [
-    ["fetch all topics", [makeMetadataPair(5, [])]],
-    ["fetch specific topic", [makeMetadataPair(5, ["test-topic"])]],
-    ["fetch nonexistent topic", [makeMetadataPair(5, ["other-topic"])]],
+    ["metadata", "fetch all topics", [makeMetadataPair(5, [])]],
+    ["metadata", "fetch specific topic", [makeMetadataPair(5, ["test-topic"])]],
     [
+      "metadata",
+      "fetch nonexistent topic",
+      [makeMetadataPair(5, ["other-topic"])],
+    ],
+    [
+      "metadata",
       "fetch specific topic and nonexistent topic",
       [makeMetadataPair(5, ["test-topic", "other-topic"])],
     ],
+    [
+      "produce",
+      "send one message to one partiton",
+      [
+        makeProducePair(5, [
+          {
+            name: "test-topic",
+            partitions: [{ index: 333, messageSet: fillMessageSet(1) }],
+          },
+        ]),
+      ],
+    ],
+    [
+      "produce",
+      "send multiple message batches to one partiton",
+      [
+        makeProducePair(5, [
+          {
+            name: "other-topic",
+            partitions: [{ index: 999, messageSet: fillMessageSet(3) }],
+          },
+        ]),
+        makeProducePair(6, [
+          {
+            name: "other-topic",
+            partitions: [{ index: 999, messageSet: fillMessageSet(2) }],
+          },
+        ]),
+      ],
+    ],
   ];
 
-  test.each(cases)("%s", async (_name, pairs) => {
+  test.each(cases)("%s: %s", async (_api, _name, pairs) => {
     const gateway = new GatewayConn();
 
     for (const [correlationId, request, decodeResponse] of pairs) {

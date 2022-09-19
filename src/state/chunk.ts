@@ -14,12 +14,17 @@ export const prepareMessageSet = (
   messageSet: MessageSet,
   initialOffset: Int64
 ): ChunkFiller => {
-  const view = new DataView(messageSet);
+  // ??
+  const view = new DataView(
+    messageSet.buffer,
+    messageSet.byteOffset,
+    messageSet.byteLength
+  );
   const frames: MessageFrame[] = [];
 
   let nextOffset = initialOffset;
   let viewIndex = 0;
-  while (viewIndex < view.buffer.byteLength) {
+  while (viewIndex < view.byteLength) {
     const frameStart = viewIndex;
 
     // Set message offset field
@@ -28,11 +33,11 @@ export const prepareMessageSet = (
     nextOffset++;
 
     // Read message size field
-    const frameSize = view.getInt32(viewIndex);
-    viewIndex += int32Size + frameSize;
+    const messageSize = view.getInt32(viewIndex);
+    viewIndex += int32Size + messageSize;
 
     // Record starting index and size of message
-    frames.push([frameStart, frameSize]);
+    frames.push([frameStart, int64Size + int32Size + messageSize]);
 
     // TODO: CRC check!
   }

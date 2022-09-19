@@ -18,21 +18,21 @@ describe("InternalProduceRequest", () => {
       "baseline request",
       {
         acks: Acks.Leader,
-        messageSet: fillMessageSet(64),
+        messageSet: fillMessageSet(1),
       },
     ],
     [
       "no acks",
       {
         acks: Acks.None,
-        messageSet: fillMessageSet(100),
+        messageSet: fillMessageSet(2),
       },
     ],
     [
       "full isr acks",
       {
         acks: Acks.FullISR,
-        messageSet: fillMessageSet(37),
+        messageSet: fillMessageSet(5),
       },
     ],
     [

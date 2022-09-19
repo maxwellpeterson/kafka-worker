@@ -2,12 +2,14 @@ import {
   Int16,
   Int32,
   Int64,
+  Int8,
   KafkaArray,
   MessageSet,
   NullableString,
   int16Size,
   int32Size,
   int64Size,
+  int8Size,
 } from "src/protocol/common";
 
 // This implementation borrows heavily from the kafkajs Node library:
@@ -32,6 +34,13 @@ export class Encoder {
       new Uint8Array(newBuffer).set(new Uint8Array(this.view.buffer));
       this.view = new DataView(newBuffer);
     }
+  }
+
+  writeInt8(value: Int8): this {
+    this.checkCapacity(int8Size);
+    this.view.setInt8(this.offset, value);
+    this.offset += int8Size;
+    return this;
   }
 
   writeInt16(value: Int16): this {
@@ -95,16 +104,20 @@ export class Encoder {
     return this.writeArray(values, (value) => this.writeString(value));
   }
 
-  private writeSlice(slice: Uint8Array): this {
+  writeSlice(slice: Uint8Array): this {
     this.checkCapacity(slice.length);
     new Uint8Array(this.view.buffer).set(slice, this.offset);
     this.offset += slice.length;
     return this;
   }
 
+  writeBytes(bytes: Uint8Array): this {
+    this.writeInt32(bytes.length);
+    return this.writeSlice(bytes);
+  }
+
   writeMessageSet(messageSet: MessageSet): this {
-    this.writeInt32(messageSet.length);
-    return this.writeSlice(messageSet);
+    return this.writeBytes(messageSet);
   }
 
   buffer(): ArrayBuffer {
@@ -114,5 +127,9 @@ export class Encoder {
       return this.view.buffer;
     }
     return this.view.buffer.slice(0, this.offset);
+  }
+
+  slice(): Uint8Array {
+    return new Uint8Array(this.view.buffer, 0, this.offset);
   }
 }

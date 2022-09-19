@@ -23,7 +23,7 @@ describe("fetchClusterMetadata", () => {
                 "errorCode": 0,
                 "isrNodes": Array [],
                 "leaderId": 333,
-                "partitionIndex": 999,
+                "partitionIndex": 0,
                 "replicaNodes": Array [],
               },
             ],

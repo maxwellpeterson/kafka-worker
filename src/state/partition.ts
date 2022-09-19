@@ -19,13 +19,13 @@ export const partitionStubUrl = "https://partition.state";
 
 interface OffsetInfo {
   nextOffset: Int64;
-  currentChunkStart: Int64;
+  currentChunk: string | null;
 }
 const offsetInfoKey = "offset-info";
-const initialOffsetInfo: OffsetInfo = {
+const initialOffsetInfo = (): OffsetInfo => ({
   nextOffset: BigInt(0),
-  currentChunkStart: BigInt(-1),
-};
+  currentChunk: null,
+});
 
 export class Partition {
   private readonly state: DurableObjectState;
@@ -63,7 +63,9 @@ export class Partition {
         })
         .catch((error: Error) =>
           console.log(
-            `[Partition DO] Error while handling request: ${error.message}`
+            `[Partition DO] Error while handling request: ${
+              error.stack ?? "no stack"
+            }`
           )
         );
     });
@@ -106,7 +108,7 @@ export class Partition {
   ): Promise<InternalProduceResponse> {
     const cursor =
       (await this.state.storage.get<OffsetInfo>(offsetInfoKey)) ??
-      initialOffsetInfo;
+      initialOffsetInfo();
     console.log(`[Partition DO] Cursor: ${stringify(cursor)}`);
     const baseOffset = cursor.nextOffset;
 
@@ -120,10 +122,10 @@ export class Partition {
       chunk = this.makeChunk(cursor.nextOffset)
     ) {
       cursor.nextOffset += BigInt(filler.fillChunk(chunk));
-      cursor.currentChunkStart = chunk.offsetStart;
+      cursor.currentChunk = chunkKey(chunk);
       await this.state.storage.put(offsetInfoKey, cursor);
       console.log(`[Partition DO] Updated cursor: ${stringify(cursor)}`);
-      await this.state.storage.put(chunk.offsetStart.toString(), chunk);
+      await this.state.storage.put(chunkKey(chunk), chunk);
       console.log(`[Partition DO] Updated chunk: ${stringify(chunk)}`);
     }
 
@@ -131,13 +133,11 @@ export class Partition {
   }
 
   private async getCurrentChunk(cursor: OffsetInfo): Promise<Chunk> {
-    if (cursor.currentChunkStart === BigInt(-1)) {
+    if (!cursor.currentChunk) {
       return this.makeChunk(cursor.nextOffset);
     }
     // Chunk must exist, because offset and chunk are updated atomically
-    return this.state.storage.get<Chunk>(
-      cursor.currentChunkStart.toString()
-    ) as Promise<Chunk>;
+    return this.state.storage.get<Chunk>(cursor.currentChunk) as Promise<Chunk>;
   }
 
   private makeChunk(offsetStart: Int64): Chunk {
@@ -149,6 +149,9 @@ export class Partition {
     };
   }
 }
+
+const chunkKey = (chunk: Chunk): string =>
+  `chunk-${chunk.offsetStart.toString()}`;
 
 export class PartitionInfo {
   readonly topic: string;
