@@ -3,6 +3,12 @@ import { Acks, ApiKey, Int32 } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { KafkaDecoder, KafkaRequestEncoder } from "src/protocol/kafka/common";
 import {
+  KafkaListOffsetsRequest,
+  KafkaListOffsetsResponse,
+  decodeKafkaListOffsetsResponse,
+  encodeKafkaListOffsetsRequest,
+} from "src/protocol/kafka/list-offsets";
+import {
   KafkaMetadataResponse,
   decodeKafkaMetadataResponse,
   encodeKafkaMetadataRequest,
@@ -13,6 +19,7 @@ import {
   decodeKafkaProduceResponse,
   encodeKafkaProduceRequest,
 } from "src/protocol/kafka/produce";
+import { globalBrokerId } from "src/state/cluster";
 import { base64, fillMessageSet } from "test/common";
 
 class GatewayConn {
@@ -123,8 +130,24 @@ const makeProducePair = (
   return [correlationId, request, decodeKafkaProduceResponse];
 };
 
+const makeListOffsetsPair = (
+  correlationId: Int32,
+  request: KafkaListOffsetsRequest
+): RequestResponse<KafkaListOffsetsResponse> => {
+  const encoder = new KafkaRequestEncoder({
+    apiKey: ApiKey.ListOffsets,
+    apiVersion: 0,
+    correlationId,
+    clientId: null,
+  });
+  const encoded = encodeKafkaListOffsetsRequest(encoder, request);
+  return [correlationId, encoded, decodeKafkaListOffsetsResponse];
+};
+
 describe("Kafka API", () => {
-  const cases: TestCase<KafkaMetadataResponse | KafkaProduceResponse>[] = [
+  const cases: TestCase<
+    KafkaMetadataResponse | KafkaProduceResponse | KafkaListOffsetsResponse
+  >[] = [
     ["metadata", "fetch all topics", [makeMetadataPair(5, [])]],
     ["metadata", "fetch specific topic", [makeMetadataPair(5, ["test-topic"])]],
     [
@@ -151,7 +174,7 @@ describe("Kafka API", () => {
     ],
     [
       "produce",
-      "send multiple message batches to one partiton",
+      "send multiple message batches to one partition",
       [
         makeProducePair(5, [
           {
@@ -165,6 +188,92 @@ describe("Kafka API", () => {
             partitions: [{ index: 999, messageSet: fillMessageSet(2) }],
           },
         ]),
+      ],
+    ],
+    [
+      "listOffsets",
+      "initial offsets",
+      [
+        makeListOffsetsPair(0, {
+          replicaId: globalBrokerId,
+          topics: [
+            {
+              name: "test-topic",
+              partitions: [
+                { index: 0, timestamp: BigInt(0), maxNumOffsets: 16 },
+              ],
+            },
+          ],
+        }),
+      ],
+    ],
+    [
+      "listOffsets",
+      "full offset list after producing records",
+      [
+        makeProducePair(0, [
+          {
+            name: "test-topic",
+            partitions: [{ index: 0, messageSet: fillMessageSet(10) }],
+          },
+        ]),
+        makeListOffsetsPair(1, {
+          replicaId: globalBrokerId,
+          topics: [
+            {
+              name: "test-topic",
+              partitions: [
+                { index: 0, timestamp: BigInt(0), maxNumOffsets: 16 },
+              ],
+            },
+          ],
+        }),
+      ],
+    ],
+    [
+      "listOffsets",
+      "oldest offset after producing records",
+      [
+        makeProducePair(0, [
+          {
+            name: "test-topic",
+            partitions: [{ index: 0, messageSet: fillMessageSet(10) }],
+          },
+        ]),
+        makeListOffsetsPair(1, {
+          replicaId: globalBrokerId,
+          topics: [
+            {
+              name: "test-topic",
+              partitions: [
+                { index: 0, timestamp: BigInt(-2), maxNumOffsets: 1 },
+              ],
+            },
+          ],
+        }),
+      ],
+    ],
+    [
+      "listOffsets",
+      "maximum number of offsets is respected",
+      [
+        makeProducePair(0, [
+          {
+            name: "test-topic",
+            partitions: [{ index: 0, messageSet: fillMessageSet(10) }],
+          },
+        ]),
+        makeListOffsetsPair(1, {
+          replicaId: globalBrokerId,
+          topics: [
+            {
+              name: "test-topic",
+              partitions: [
+                { index: 0, timestamp: BigInt(0), maxNumOffsets: 4 },
+              ],
+            },
+          ],
+        }),
       ],
     ],
   ];

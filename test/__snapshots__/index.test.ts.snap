@@ -1,5 +1,159 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Kafka API listOffsets: full offset list after producing records 1`] = `"AAAAJgAAAAAAAAABAAp0ZXN0LXRvcGljAAAAAQAAAAAAAAAAAAAAAAAA"`;
+
+exports[`Kafka API listOffsets: full offset list after producing records 2`] = `
+Object {
+  "topics": Array [
+    Object {
+      "name": "test-topic",
+      "partitions": Array [
+        Object {
+          "baseOffset": 0n,
+          "errorCode": 0,
+          "index": 0,
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`Kafka API listOffsets: full offset list after producing records 3`] = `"AAAAegAAAAEAAAABAAp0ZXN0LXRvcGljAAAAAQAAAAAAAAAAAAsAAAAAAAAACgAAAAAAAAAJAAAAAAAAAAgAAAAAAAAABwAAAAAAAAAGAAAAAAAAAAUAAAAAAAAABAAAAAAAAAADAAAAAAAAAAIAAAAAAAAAAQAAAAAAAAAA"`;
+
+exports[`Kafka API listOffsets: full offset list after producing records 4`] = `
+Object {
+  "topics": Array [
+    Object {
+      "name": "test-topic",
+      "partitions": Array [
+        Object {
+          "errorCode": 0,
+          "index": 0,
+          "oldStyleOffsets": Array [
+            10n,
+            9n,
+            8n,
+            7n,
+            6n,
+            5n,
+            4n,
+            3n,
+            2n,
+            1n,
+            0n,
+          ],
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`Kafka API listOffsets: initial offsets 1`] = `"AAAAKgAAAAAAAAABAAp0ZXN0LXRvcGljAAAAAQAAAAAAAAAAAAEAAAAAAAAAAA=="`;
+
+exports[`Kafka API listOffsets: initial offsets 2`] = `
+Object {
+  "topics": Array [
+    Object {
+      "name": "test-topic",
+      "partitions": Array [
+        Object {
+          "errorCode": 0,
+          "index": 0,
+          "oldStyleOffsets": Array [
+            0n,
+          ],
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`Kafka API listOffsets: maximum number of offsets is respected 1`] = `"AAAAJgAAAAAAAAABAAp0ZXN0LXRvcGljAAAAAQAAAAAAAAAAAAAAAAAA"`;
+
+exports[`Kafka API listOffsets: maximum number of offsets is respected 2`] = `
+Object {
+  "topics": Array [
+    Object {
+      "name": "test-topic",
+      "partitions": Array [
+        Object {
+          "baseOffset": 0n,
+          "errorCode": 0,
+          "index": 0,
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`Kafka API listOffsets: maximum number of offsets is respected 3`] = `"AAAAQgAAAAEAAAABAAp0ZXN0LXRvcGljAAAAAQAAAAAAAAAAAAQAAAAAAAAACgAAAAAAAAAJAAAAAAAAAAgAAAAAAAAABw=="`;
+
+exports[`Kafka API listOffsets: maximum number of offsets is respected 4`] = `
+Object {
+  "topics": Array [
+    Object {
+      "name": "test-topic",
+      "partitions": Array [
+        Object {
+          "errorCode": 0,
+          "index": 0,
+          "oldStyleOffsets": Array [
+            10n,
+            9n,
+            8n,
+            7n,
+          ],
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`Kafka API listOffsets: oldest offset after producing records 1`] = `"AAAAJgAAAAAAAAABAAp0ZXN0LXRvcGljAAAAAQAAAAAAAAAAAAAAAAAA"`;
+
+exports[`Kafka API listOffsets: oldest offset after producing records 2`] = `
+Object {
+  "topics": Array [
+    Object {
+      "name": "test-topic",
+      "partitions": Array [
+        Object {
+          "baseOffset": 0n,
+          "errorCode": 0,
+          "index": 0,
+        },
+      ],
+    },
+  ],
+}
+`;
+
+exports[`Kafka API listOffsets: oldest offset after producing records 3`] = `"AAAAKgAAAAEAAAABAAp0ZXN0LXRvcGljAAAAAQAAAAAAAAAAAAEAAAAAAAAAAA=="`;
+
+exports[`Kafka API listOffsets: oldest offset after producing records 4`] = `
+Object {
+  "topics": Array [
+    Object {
+      "name": "test-topic",
+      "partitions": Array [
+        Object {
+          "errorCode": 0,
+          "index": 0,
+          "oldStyleOffsets": Array [
+            0n,
+          ],
+        },
+      ],
+    },
+  ],
+}
+`;
+
 exports[`Kafka API metadata: fetch all topics 1`] = `"AAAAQwAAAAUAAAABAAABTQAJbG9jYWxob3N0AAAiUwAAAAEAAAAKdGVzdC10b3BpYwAAAAEAAAAAAAAAAAFNAAAAAAAAAAA="`;
 
 exports[`Kafka API metadata: fetch all topics 2`] = `

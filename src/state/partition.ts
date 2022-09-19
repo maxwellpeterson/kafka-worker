@@ -187,7 +187,7 @@ export class Partition {
 
     // Send requested number of offsets
     const stopOffset = cursor.nextOffset - BigInt(request.maxNumOffsets);
-    const clampedStopOffset = stopOffset < 0 ? 0 : stopOffset;
+    const clampedStopOffset = stopOffset < 0 ? -1 : stopOffset;
     const offsets: Int64[] = [];
     for (let i = cursor.nextOffset; i > clampedStopOffset; i--) {
       // TODO: More efficient approach here?
