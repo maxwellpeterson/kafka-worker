@@ -31,7 +31,7 @@ export const generateEnumPredicate =
 export const ApiKey = {
   Produce: 0,
   // Fetch: 1,
-  // ListOffsets: 2,
+  ListOffsets: 2,
   Metadata: 3,
 } as const;
 export type ApiKey = ValueOf<typeof ApiKey>;
@@ -40,8 +40,10 @@ export const validApiKey = generateEnumPredicate(ApiKey);
 // ErrorCode is an Int16
 export const ErrorCode = {
   None: 0,
+  OffsetOutOfRange: 1,
   CorruptMessage: 2,
   UnknownTopicOrPartition: 3,
+  NotLeaderForPartition: 6,
 } as const;
 export type ErrorCode = ValueOf<typeof ErrorCode>;
 export const validErrorCode = generateEnumPredicate(ErrorCode);

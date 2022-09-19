@@ -1,6 +1,4 @@
 import { ErrorCode } from "src/protocol/common";
-import { Decoder } from "src/protocol/decoder";
-import { Encoder } from "src/protocol/encoder";
 import {
   KafkaMetadataRequest,
   KafkaMetadataResponse,
@@ -9,7 +7,7 @@ import {
   encodeKafkaMetadataRequest,
   encodeKafkaMetadataResponse,
 } from "src/protocol/kafka/metadata";
-import { base64 } from "test/common";
+import { testEncodeDecodeSnapshot } from "test/protocol/common";
 
 describe("KafkaMetadataRequest", () => {
   type TestCase = [string, KafkaMetadataRequest];
@@ -18,16 +16,13 @@ describe("KafkaMetadataRequest", () => {
     ["one topic", { topics: ["topic-one"] }],
     ["multiple topics", { topics: ["topic-one", "topic-two", "topic-three"] }],
   ];
-  test.each(cases)("%s", (_name, request) => {
-    const encoder = new Encoder();
-    const buffer = encodeKafkaMetadataRequest(encoder, request);
 
-    expect(base64(buffer)).toMatchSnapshot();
-
-    const decoder = new Decoder(buffer);
-    const decoded = decodeKafkaMetadataRequest(decoder);
-
-    expect(request).toEqual(decoded);
+  test.each(cases)("%s", (_name, value) => {
+    testEncodeDecodeSnapshot(
+      value,
+      encodeKafkaMetadataRequest,
+      decodeKafkaMetadataRequest
+    );
   });
 });
 
@@ -171,15 +166,11 @@ describe("KafkaMetadataResponse", () => {
     ],
   ];
 
-  test.each(cases)("%s", (_name, response) => {
-    const encoder = new Encoder();
-    const buffer = encodeKafkaMetadataResponse(encoder, response);
-
-    expect(base64(buffer)).toMatchSnapshot();
-
-    const decoder = new Decoder(buffer);
-    const decoded = decodeKafkaMetadataResponse(decoder);
-
-    expect(response).toEqual(decoded);
+  test.each(cases)("%s", (_name, value) => {
+    testEncodeDecodeSnapshot(
+      value,
+      encodeKafkaMetadataResponse,
+      decodeKafkaMetadataResponse
+    );
   });
 });

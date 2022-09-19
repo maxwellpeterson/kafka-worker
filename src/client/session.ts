@@ -1,10 +1,14 @@
 import { RequestManager } from "src/client/request-manager";
 import { Env, stringify } from "src/common";
-import { ApiKey, validApiKey } from "src/protocol/common";
+import { ApiKey, ErrorCode, validApiKey } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import { RequestMetadata, decodeRequestHeader } from "src/protocol/header";
 import { KafkaDecoder, KafkaResponseEncoder } from "src/protocol/kafka/common";
+import {
+  decodeKafkaListOffsetsRequest,
+  encodeKafkaListOffsetsResponse,
+} from "src/protocol/kafka/list-offsets";
 import {
   decodeKafkaMetadataRequest,
   encodeKafkaMetadataResponse,
@@ -13,7 +17,7 @@ import {
   decodeKafkaProduceRequest,
   encodeKafkaProduceResponse,
 } from "src/protocol/kafka/produce";
-import { fetchClusterMetadata } from "src/state/cluster";
+import { fetchClusterMetadata, globalBrokerId } from "src/state/cluster";
 
 // Coordinator class that handles one client connection and forwards incoming
 // requests to Partition DOs and the global Cluster DO
@@ -44,6 +48,8 @@ export class Session {
     switch (header.apiKey) {
       case ApiKey.Produce:
         return this.handleProduceRequest(header, decoder, encoder);
+      case ApiKey.ListOffsets:
+        return this.handleListOffsetsRequest(header, decoder, encoder);
       case ApiKey.Metadata:
         return this.handleMetadataRequest(header, decoder, encoder);
     }
@@ -58,13 +64,39 @@ export class Session {
     console.log(`Produce request: ${stringify(request)}`);
 
     const response = await this.internal.produceRequest(metadata, request);
-
     console.log(`Produce response: ${stringify(response)}`);
 
     if (response === null) {
       return null;
     }
     return encodeKafkaProduceResponse(encoder, response);
+  }
+
+  private async handleListOffsetsRequest(
+    metadata: RequestMetadata,
+    decoder: Decoder,
+    encoder: Encoder
+  ): Promise<ArrayBuffer | null> {
+    const request = decodeKafkaListOffsetsRequest(decoder);
+    console.log(`ListOffsets request: ${stringify(request)}`);
+
+    if (request.replicaId !== globalBrokerId) {
+      return encodeKafkaListOffsetsResponse(encoder, {
+        topics: request.topics.map((topic) => ({
+          name: topic.name,
+          partitions: topic.partitions.map((partition) => ({
+            index: partition.index,
+            errorCode: ErrorCode.NotLeaderForPartition,
+            oldStyleOffsets: [],
+          })),
+        })),
+      });
+    }
+
+    const response = await this.internal.listOffsetsRequest(metadata, request);
+    console.log(`ListOffsets response: ${stringify(response)}`);
+
+    return encodeKafkaListOffsetsResponse(encoder, response);
   }
 
   private async handleMetadataRequest(

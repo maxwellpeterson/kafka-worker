@@ -9,6 +9,12 @@ import {
   validPartitionApiKey,
 } from "src/protocol/internal/common";
 import {
+  InternalListOffsetsRequest,
+  InternalListOffsetsResponse,
+  decodeInternalListOffsetsRequest,
+  encodeInternalListOffsetsResponse,
+} from "src/protocol/internal/list-offsets";
+import {
   InternalProduceResponse,
   decodeInternalProduceRequest,
   encodeInternalProduceResponse,
@@ -86,6 +92,8 @@ export class Partition {
     switch (header.apiKey) {
       case PartitionApiKey.Produce:
         return this.handleProduceRequest(header, decoder, encoder);
+      case PartitionApiKey.ListOffsets:
+        return this.handleListOffsetsRequest(header, decoder, encoder);
     }
   }
 
@@ -106,9 +114,7 @@ export class Partition {
   private async appendMessageSet(
     messageSet: MessageSet
   ): Promise<InternalProduceResponse> {
-    const cursor =
-      (await this.state.storage.get<OffsetInfo>(offsetInfoKey)) ??
-      initialOffsetInfo();
+    const cursor = await this.getCursor();
     console.log(`[Partition DO] Cursor: ${stringify(cursor)}`);
     const baseOffset = cursor.nextOffset;
 
@@ -132,6 +138,13 @@ export class Partition {
     return { errorCode: ErrorCode.None, baseOffset };
   }
 
+  private async getCursor(): Promise<OffsetInfo> {
+    return (
+      (await this.state.storage.get<OffsetInfo>(offsetInfoKey)) ??
+      initialOffsetInfo()
+    );
+  }
+
   private async getCurrentChunk(cursor: OffsetInfo): Promise<Chunk> {
     if (!cursor.currentChunk) {
       return this.makeChunk(cursor.nextOffset);
@@ -146,6 +159,43 @@ export class Partition {
       buffer: new ArrayBuffer(this.chunkSize),
       frames: [],
       nextIndex: 0,
+    };
+  }
+
+  private async handleListOffsetsRequest(
+    metadata: RequestMetadata,
+    decoder: Decoder,
+    encoder: Encoder
+  ): Promise<ArrayBuffer> {
+    const request = decodeInternalListOffsetsRequest(decoder);
+    const response = await this.listOffsets(request);
+    return encodeInternalListOffsetsResponse(encoder, response);
+  }
+
+  private async listOffsets(
+    request: InternalListOffsetsRequest
+  ): Promise<InternalListOffsetsResponse> {
+    if (request.timestamp === BigInt(-2)) {
+      // Only send earliest available offset
+      return {
+        errorCode: ErrorCode.None,
+        oldStyleOffsets: [initialOffsetInfo().nextOffset],
+      };
+    }
+
+    const cursor = await this.getCursor();
+
+    // Send requested number of offsets
+    const stopOffset = cursor.nextOffset - BigInt(request.maxNumOffsets);
+    const clampedStopOffset = stopOffset < 0 ? 0 : stopOffset;
+    const offsets: Int64[] = [];
+    for (let i = cursor.nextOffset; i > clampedStopOffset; i--) {
+      // TODO: More efficient approach here?
+      offsets.push(i);
+    }
+    return {
+      errorCode: ErrorCode.None,
+      oldStyleOffsets: offsets,
     };
   }
 }

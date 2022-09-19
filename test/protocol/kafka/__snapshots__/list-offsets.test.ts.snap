@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`KafkaListOffsetsRequest earliest offset 1`] = `"AAABTQAAAAEACXRvcGljLW9uZQAAAAEAAAAA//////////4AAAAB"`;
+
+exports[`KafkaListOffsetsRequest latest offset 1`] = `"AAABTQAAAAEACXRvcGljLW9uZQAAAAEAAAAA//////////8AAAAB"`;
+
+exports[`KafkaListOffsetsRequest multiple offsets 1`] = `"AAABTQAAAAEACXRvcGljLW9uZQAAAAEAAAAAAAAAAAAAAAAAAABA"`;
+
+exports[`KafkaListOffsetsResponse multiple offsets 1`] = `"AAAAAQAJdG9waWMtb25lAAAAAQAAAAAAAAAAAAQAAAAAAAAAAwAAAAAAAAACAAAAAAAAAAEAAAAAAAAAAA=="`;
+
+exports[`KafkaListOffsetsResponse offset out of range 1`] = `"AAAAAQAJdG9waWMtb25lAAAAAQAAAAAAAQAAAAA="`;
+
+exports[`KafkaListOffsetsResponse one offset 1`] = `"AAAAAQAJdG9waWMtb25lAAAAAQAAAAAAAAAAAAEAAAAAAAAAEA=="`;

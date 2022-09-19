@@ -10,6 +10,7 @@ import {
   encodeInternalProduceResponse,
 } from "src/protocol/internal/produce";
 import { fillMessageSet } from "test/common";
+import { testEncodeDecode } from "test/protocol/common";
 
 describe("InternalProduceRequest", () => {
   type TestCase = [string, InternalProduceRequest];
@@ -44,14 +45,12 @@ describe("InternalProduceRequest", () => {
     ],
   ];
 
-  test.each(cases)("%s", (_name, request) => {
-    const encoder = new Encoder();
-    const buffer = encodeInternalProduceRequest(encoder, request);
-
-    const decoder = new Decoder(buffer);
-    const output = decodeInternalProduceRequest(decoder);
-
-    expect(request).toEqual(output);
+  test.each(cases)("%s", (_name, value) => {
+    testEncodeDecode(
+      value,
+      encodeInternalProduceRequest,
+      decodeInternalProduceRequest
+    );
   });
 });
 
@@ -65,13 +64,11 @@ describe("InternalProduceResponse", () => {
     ["offset zero", { errorCode: ErrorCode.None, baseOffset: BigInt(0) }],
   ];
 
-  test.each(cases)("%s", (_name, response) => {
-    const encoder = new Encoder();
-    const buffer = encodeInternalProduceResponse(encoder, response);
-
-    const decoder = new Decoder(buffer);
-    const output = decodeInternalProduceResponse(decoder);
-
-    expect(response).toEqual(output);
+  test.each(cases)("%s", (_name, value) => {
+    testEncodeDecode(
+      value,
+      encodeInternalProduceResponse,
+      decodeInternalProduceResponse
+    );
   });
 });

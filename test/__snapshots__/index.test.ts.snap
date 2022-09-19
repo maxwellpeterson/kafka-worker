@@ -113,9 +113,9 @@ Object {
 }
 `;
 
-exports[`Kafka API produce: send multiple message batches to one partiton 1`] = `"AAAAJwAAAAUAAAABAAtvdGhlci10b3BpYwAAAAEAAAPnAAAAAAAAAAAAAA=="`;
+exports[`Kafka API produce: send multiple message batches to one partition 1`] = `"AAAAJwAAAAUAAAABAAtvdGhlci10b3BpYwAAAAEAAAPnAAAAAAAAAAAAAA=="`;
 
-exports[`Kafka API produce: send multiple message batches to one partiton 2`] = `
+exports[`Kafka API produce: send multiple message batches to one partition 2`] = `
 Object {
   "topics": Array [
     Object {
@@ -132,9 +132,9 @@ Object {
 }
 `;
 
-exports[`Kafka API produce: send multiple message batches to one partiton 3`] = `"AAAAJwAAAAYAAAABAAtvdGhlci10b3BpYwAAAAEAAAPnAAAAAAAAAAAAAw=="`;
+exports[`Kafka API produce: send multiple message batches to one partition 3`] = `"AAAAJwAAAAYAAAABAAtvdGhlci10b3BpYwAAAAEAAAPnAAAAAAAAAAAAAw=="`;
 
-exports[`Kafka API produce: send multiple message batches to one partiton 4`] = `
+exports[`Kafka API produce: send multiple message batches to one partition 4`] = `
 Object {
   "topics": Array [
     Object {

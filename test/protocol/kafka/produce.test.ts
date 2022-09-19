@@ -1,6 +1,4 @@
 import { Acks, ErrorCode } from "src/protocol/common";
-import { Decoder } from "src/protocol/decoder";
-import { Encoder } from "src/protocol/encoder";
 import {
   KafkaProduceRequest,
   KafkaProduceResponse,
@@ -9,7 +7,8 @@ import {
   encodeKafkaProduceRequest,
   encodeKafkaProduceResponse,
 } from "src/protocol/kafka/produce";
-import { base64, fillMessageSet } from "test/common";
+import { fillMessageSet } from "test/common";
+import { testEncodeDecodeSnapshot } from "test/protocol/common";
 
 describe("KafkaProduceRequest", () => {
   type TestCase = [string, KafkaProduceRequest];
@@ -83,16 +82,12 @@ describe("KafkaProduceRequest", () => {
     ],
   ];
 
-  test.each(cases)("%s", (_name, request) => {
-    const encoder = new Encoder();
-    const buffer = encodeKafkaProduceRequest(encoder, request);
-
-    expect(base64(buffer)).toMatchSnapshot();
-
-    const decoder = new Decoder(buffer);
-    const decoded = decodeKafkaProduceRequest(decoder);
-
-    expect(request).toEqual(decoded);
+  test.each(cases)("%s", (_name, value) => {
+    testEncodeDecodeSnapshot(
+      value,
+      encodeKafkaProduceRequest,
+      decodeKafkaProduceRequest
+    );
   });
 });
 
@@ -182,15 +177,11 @@ describe("KafkaProduceResponse", () => {
     ],
   ];
 
-  test.each(cases)("%s", (_name, response) => {
-    const encoder = new Encoder();
-    const buffer = encodeKafkaProduceResponse(encoder, response);
-
-    expect(base64(buffer)).toMatchSnapshot();
-
-    const decoder = new Decoder(buffer);
-    const decoded = decodeKafkaProduceResponse(decoder);
-
-    expect(response).toEqual(decoded);
+  test.each(cases)("%s", (_name, value) => {
+    testEncodeDecodeSnapshot(
+      value,
+      encodeKafkaProduceResponse,
+      decodeKafkaProduceResponse
+    );
   });
 });

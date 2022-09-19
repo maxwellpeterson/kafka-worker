@@ -110,6 +110,10 @@ export class Decoder {
     return this.readArray(() => this.readInt32());
   }
 
+  readInt64Array(): Int64[] {
+    return this.readArray(() => this.readInt64());
+  }
+
   readStringArray(): string[] {
     return this.readArray(() => this.readString());
   }

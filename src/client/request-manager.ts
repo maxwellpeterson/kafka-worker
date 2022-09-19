@@ -1,4 +1,5 @@
 import {
+  PendingListOffsetsRequest,
   PendingProduceRequest,
   PendingRequest,
 } from "src/client/pending-request";
@@ -9,7 +10,12 @@ import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import { RequestMetadata, encodeRequestHeader } from "src/protocol/header";
 import { PartitionApiKey } from "src/protocol/internal/common";
+import { encodeInternalListOffsetsRequest } from "src/protocol/internal/list-offsets";
 import { encodeInternalProduceRequest } from "src/protocol/internal/produce";
+import {
+  KafkaListOffsetsRequest,
+  KafkaListOffsetsResponse,
+} from "src/protocol/kafka/list-offsets";
 import {
   KafkaProduceRequest,
   KafkaProduceResponse,
@@ -88,6 +94,46 @@ export class RequestManager {
           }
         })
         .catch(reject);
+    });
+  }
+
+  listOffsetsRequest(
+    metadata: RequestMetadata,
+    request: KafkaListOffsetsRequest
+  ): Promise<KafkaListOffsetsResponse> {
+    return new Promise<KafkaListOffsetsResponse>((resolve, reject) => {
+      const done = (response: KafkaListOffsetsResponse) => {
+        this.pending.delete(metadata.correlationId);
+        resolve(response);
+      };
+      this.pending.set(
+        metadata.correlationId,
+        new PendingListOffsetsRequest(request, done)
+      );
+
+      Promise.all(
+        request.topics.flatMap((topic) =>
+          topic.partitions.map(async (partition) => {
+            const encoder = new Encoder();
+            encodeRequestHeader(encoder, {
+              apiKey: PartitionApiKey.ListOffsets,
+              apiVersion: 0,
+              correlationId: metadata.correlationId,
+              clientId: metadata.clientId,
+            });
+
+            const partitionRequest = encodeInternalListOffsetsRequest(encoder, {
+              timestamp: partition.timestamp,
+              maxNumOffsets: partition.maxNumOffsets,
+            });
+
+            await this.socket.sendPartition(
+              new PartitionInfo(topic.name, partition.index),
+              partitionRequest
+            );
+          })
+        )
+      ).catch(reject);
     });
   }
 

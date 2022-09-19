@@ -10,6 +10,7 @@ import { Encoder } from "src/protocol/encoder";
 // PartitionApiKey is an Int16
 export const PartitionApiKey = {
   Produce: ApiKey.Produce,
+  ListOffsets: ApiKey.ListOffsets,
 } as const;
 export type PartitionApiKey = ValueOf<typeof PartitionApiKey>;
 export const validPartitionApiKey = generateEnumPredicate(PartitionApiKey);

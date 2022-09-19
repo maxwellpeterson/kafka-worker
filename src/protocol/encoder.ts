@@ -100,6 +100,10 @@ export class Encoder {
     return this.writeArray(values, (value) => this.writeInt32(value));
   }
 
+  writeInt64Array(values: Int64[]): this {
+    return this.writeArray(values, (value) => this.writeInt64(value));
+  }
+
   writeStringArray(values: KafkaArray<string>): this {
     return this.writeArray(values, (value) => this.writeString(value));
   }

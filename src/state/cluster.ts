@@ -2,11 +2,9 @@ import { ElemOf, Env } from "src/common";
 import { ErrorCode, Int32 } from "src/protocol/common";
 import { KafkaMetadataResponse } from "src/protocol/kafka/metadata";
 
+// These are made up values
 const globalClusterName = "global";
-const globalBroker = {
-  // This is a made up number
-  nodeId: 333,
-};
+export const globalBrokerId = 333;
 
 const searchParam = "topics";
 const sep = ",";
@@ -69,7 +67,7 @@ export class Cluster {
 
     const brokers = [
       {
-        ...globalBroker,
+        nodeId: globalBrokerId,
         host: this.env.HOSTNAME,
         port: parseInt(this.env.PORT),
       },
@@ -110,7 +108,7 @@ const generateMetadata = (topic: TopicState): TopicMetadata => ({
   partitions: topic.partitions.map((partition) => ({
     errorCode: ErrorCode.None,
     partitionIndex: partition.index,
-    leaderId: globalBroker.nodeId,
+    leaderId: globalBrokerId,
     replicaNodes: [],
     isrNodes: [],
   })),
