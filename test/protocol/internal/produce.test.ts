@@ -9,7 +9,7 @@ import {
   encodeInternalProduceRequest,
   encodeInternalProduceResponse,
 } from "src/protocol/internal/produce";
-import { fillMessageSet } from "src/protocol/test-utils";
+import { fillMessageSet } from "test/common";
 
 describe("InternalProduceRequest", () => {
   type TestCase = [string, InternalProduceRequest];

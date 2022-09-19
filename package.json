@@ -22,7 +22,7 @@
   "type": "module",
   "module": "./dist/index.mjs",
   "scripts": {
-    "check": "tsc",
+    "check": "tsc && tsc -p test/tsconfig.json",
     "lint": "eslint .",
     "test": "npm run build && node --experimental-vm-modules --no-warnings node_modules/jest/bin/jest.js",
     "build": "node build.js",

@@ -9,7 +9,7 @@ import {
   encodeKafkaProduceRequest,
   encodeKafkaProduceResponse,
 } from "src/protocol/kafka/produce";
-import { base64, fillMessageSet } from "src/protocol/test-utils";
+import { base64, fillMessageSet } from "test/common";
 
 describe("KafkaProduceRequest", () => {
   type TestCase = [string, KafkaProduceRequest];

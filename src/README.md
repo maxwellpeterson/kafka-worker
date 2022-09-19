@@ -1,6 +1,6 @@
 # Source
 
-This folder contains all source files, including tests.
+This folder contains all source files, not including tests.
 
 The `client` folder contains files related to managing client connections. This includes converting Kafka API requests into internal API requests, converting internal API responses into Kafka API responses, forwarding internal API requests to Durable Objects, and handling the fan out of internal requests and fan in of internal responses.
 

@@ -6,7 +6,7 @@ import {
   decodeRequestHeader,
   encodeRequestHeader,
 } from "src/protocol/header";
-import { base64 } from "./test-utils";
+import { base64 } from "test/common";
 
 describe("RequestHeader", () => {
   type TestCase = [string, RequestHeader<ApiKey>];

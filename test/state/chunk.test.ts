@@ -1,5 +1,5 @@
-import { base64, fillMessageSet } from "src/protocol/test-utils";
 import { Chunk, prepareMessageSet } from "src/state/chunk";
+import { base64, fillMessageSet } from "test/common";
 
 describe("prepareMessageSet", () => {
   type TestCase = [string, number, Chunk];

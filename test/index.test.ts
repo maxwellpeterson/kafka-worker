@@ -1,5 +1,6 @@
 import handler from "src/index";
 import { Acks, ApiKey, Int32 } from "src/protocol/common";
+import { Decoder } from "src/protocol/decoder";
 import { KafkaDecoder, KafkaRequestEncoder } from "src/protocol/kafka/common";
 import {
   KafkaMetadataResponse,
@@ -12,8 +13,7 @@ import {
   decodeKafkaProduceResponse,
   encodeKafkaProduceRequest,
 } from "src/protocol/kafka/produce";
-import { base64, fillMessageSet } from "src/protocol/test-utils";
-import { Decoder } from "./protocol/decoder";
+import { base64, fillMessageSet } from "test/common";
 
 class GatewayConn {
   private readonly socket: WebSocket;

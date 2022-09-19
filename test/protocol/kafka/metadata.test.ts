@@ -9,7 +9,7 @@ import {
   encodeKafkaMetadataRequest,
   encodeKafkaMetadataResponse,
 } from "src/protocol/kafka/metadata";
-import { base64 } from "src/protocol/test-utils";
+import { base64 } from "test/common";
 
 describe("KafkaMetadataRequest", () => {
   type TestCase = [string, KafkaMetadataRequest];

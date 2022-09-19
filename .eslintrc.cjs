@@ -10,11 +10,11 @@ module.exports = {
   parser: "@typescript-eslint/parser",
   parserOptions: {
     tsconfigRootDir: __dirname,
-    project: ["./tsconfig.json"],
+    project: ["./tsconfig.json", "./test/tsconfig.json"],
   },
   plugins: ["@typescript-eslint", "import"],
   root: true,
-  ignorePatterns: [".eslintrc.js", "jest.config.js"],
+  ignorePatterns: [".eslintrc.js", "jest.config.js", "build.js"],
   settings: {
     "import/resolver": {
       typescript: true,
