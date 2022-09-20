@@ -41,9 +41,19 @@ export class PendingProduceRequest {
       })),
     };
 
+    const timeoutId = setTimeout(() => {
+      this.response.cancel({
+        errorCode: ErrorCode.RequestTimedOut,
+        baseOffset: BigInt(0),
+      });
+    }, request.timeoutMs);
+
     this.response = new IncrementalResponse<KafkaProduceResponse>(
       stubResponse,
-      done
+      (response) => {
+        clearTimeout(timeoutId);
+        done(response);
+      }
     );
   }
 

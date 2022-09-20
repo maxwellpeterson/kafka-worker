@@ -213,4 +213,12 @@ export class PartitionInfo {
     this.index = index;
     this.id = `${topic}-${index}`;
   }
+
+  static fromId(id: string): PartitionInfo {
+    const delimIndex = id.lastIndexOf("-");
+    return new PartitionInfo(
+      id.slice(0, delimIndex),
+      parseInt(id.slice(delimIndex + 1))
+    );
+  }
 }

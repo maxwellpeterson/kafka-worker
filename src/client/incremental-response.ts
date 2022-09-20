@@ -86,4 +86,11 @@ export class IncrementalResponse<T extends BaseResponse> {
       this.done(this.response);
     }
   }
+
+  // Fill in all pending subresponses with the given subresponse
+  cancel(fillerResponse: PartitionResponse<T>) {
+    this.pendingPartitions.forEach((id) => {
+      this.addPartition(PartitionInfo.fromId(id), fillerResponse);
+    });
+  }
 }

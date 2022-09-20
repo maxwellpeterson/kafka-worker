@@ -44,6 +44,7 @@ export const ErrorCode = {
   CorruptMessage: 2,
   UnknownTopicOrPartition: 3,
   NotLeaderForPartition: 6,
+  RequestTimedOut: 7,
 } as const;
 export type ErrorCode = ValueOf<typeof ErrorCode>;
 export const validErrorCode = generateEnumPredicate(ErrorCode);
