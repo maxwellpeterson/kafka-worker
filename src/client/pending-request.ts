@@ -21,6 +21,8 @@ import { PartitionInfo } from "src/state/partition";
 // to be pieced together into a complete response that is sent back to the client.
 export interface PendingRequest {
   handlePartitionMessage(partition: PartitionInfo, decoder: Decoder): void;
+  // If request does not depend on given partition, this should be a no-op
+  handlePartitionClose(partition: PartitionInfo): void;
 }
 
 export class PendingProduceRequest {
@@ -61,6 +63,13 @@ export class PendingProduceRequest {
     const response = decodeInternalProduceResponse(decoder);
     this.response.addPartition(partition, response);
   }
+
+  handlePartitionClose(partition: PartitionInfo): void {
+    this.response.addPartition(partition, {
+      errorCode: ErrorCode.UnknownServerError,
+      baseOffset: BigInt(0),
+    });
+  }
 }
 
 export class PendingListOffsetsRequest {
@@ -90,5 +99,12 @@ export class PendingListOffsetsRequest {
   handlePartitionMessage(partition: PartitionInfo, decoder: Decoder): void {
     const response = decodeInternalListOffsetsResponse(decoder);
     this.response.addPartition(partition, response);
+  }
+
+  handlePartitionClose(partition: PartitionInfo): void {
+    this.response.addPartition(partition, {
+      errorCode: ErrorCode.UnknownServerError,
+      oldStyleOffsets: [],
+    });
   }
 }

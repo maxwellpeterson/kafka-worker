@@ -39,6 +39,7 @@ export const validApiKey = generateEnumPredicate(ApiKey);
 
 // ErrorCode is an Int16
 export const ErrorCode = {
+  UnknownServerError: -1,
   None: 0,
   OffsetOutOfRange: 1,
   CorruptMessage: 2,

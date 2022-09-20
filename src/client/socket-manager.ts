@@ -3,7 +3,7 @@ import { PartitionInfo, partitionStubUrl } from "src/state/partition";
 
 interface PartitionHandler {
   handlePartitionMessage(partition: PartitionInfo, message: ArrayBuffer): void;
-  // TODO: Add error and close(?) handlers
+  handlePartitionClose(partition: PartitionInfo): void;
 }
 
 interface SocketState {
@@ -95,7 +95,10 @@ export class SocketManager {
           this.partitionHandler.handlePartitionMessage(partition, event.data);
         });
 
-        // TODO: Add error and close(?) handlers
+        socket.addEventListener("close", () => {
+          this.sockets.active.delete(partition.id);
+          this.partitionHandler.handlePartitionClose(partition);
+        });
 
         // Once this.partitions.pending and this.partitions.active have been
         // updated, and the socket event handlers have been registered, the

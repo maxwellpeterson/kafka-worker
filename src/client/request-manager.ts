@@ -150,4 +150,8 @@ export class RequestManager {
     }
     console.log("Couldn't match Partition response to pending request");
   }
+
+  handlePartitionClose(partition: PartitionInfo): void {
+    this.pending.forEach((request) => request.handlePartitionClose(partition));
+  }
 }
