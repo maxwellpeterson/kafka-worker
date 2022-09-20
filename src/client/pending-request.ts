@@ -23,14 +23,18 @@ export interface PendingRequest {
   handlePartitionMessage(partition: PartitionInfo, decoder: Decoder): void;
   // If request does not depend on given partition, this should be a no-op
   handlePartitionClose(partition: PartitionInfo): void;
+  abort(): void;
 }
 
 export class PendingProduceRequest {
   private readonly response: IncrementalResponse<KafkaProduceResponse>;
+  readonly abort: () => void;
 
   constructor(
     request: KafkaProduceRequest,
-    done: DoneHandler<KafkaProduceResponse>
+    done: DoneHandler<KafkaProduceResponse>,
+
+    abort: () => void
   ) {
     const stubResponse: KafkaProduceResponse = {
       topics: request.topics.map((topic) => ({
@@ -57,6 +61,7 @@ export class PendingProduceRequest {
         done(response);
       }
     );
+    this.abort = abort;
   }
 
   handlePartitionMessage(partition: PartitionInfo, decoder: Decoder): void {
@@ -74,10 +79,12 @@ export class PendingProduceRequest {
 
 export class PendingListOffsetsRequest {
   private readonly response: IncrementalResponse<KafkaListOffsetsResponse>;
+  readonly abort: () => void;
 
   constructor(
     request: KafkaListOffsetsRequest,
-    done: DoneHandler<KafkaListOffsetsResponse>
+    done: DoneHandler<KafkaListOffsetsResponse>,
+    abort: () => void
   ) {
     const stubResponse: KafkaListOffsetsResponse = {
       topics: request.topics.map((topic) => ({
@@ -94,6 +101,7 @@ export class PendingListOffsetsRequest {
       stubResponse,
       done
     );
+    this.abort = abort;
   }
 
   handlePartitionMessage(partition: PartitionInfo, decoder: Decoder): void {

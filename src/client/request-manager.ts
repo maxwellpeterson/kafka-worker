@@ -24,6 +24,8 @@ import { PartitionInfo } from "src/state/partition";
 
 type CorrelationId = number;
 
+const abortedRequestError = new Error("Request aborted");
+
 // One Kafka protocol request can operate on multiple partitions, which means
 // multiple subrequests to Partition DOs that fan out, and multiple subresponses
 // that need to be fanned in to complete the final response sent back to the
@@ -57,9 +59,13 @@ export class RequestManager {
           this.pending.delete(metadata.correlationId);
           resolve(response);
         };
+        const abort = () => {
+          this.pending.delete(metadata.correlationId);
+          reject(abortedRequestError);
+        };
         this.pending.set(
           metadata.correlationId,
-          new PendingProduceRequest(request, done)
+          new PendingProduceRequest(request, done, abort)
         );
       }
 
@@ -106,9 +112,13 @@ export class RequestManager {
         this.pending.delete(metadata.correlationId);
         resolve(response);
       };
+      const abort = () => {
+        this.pending.delete(metadata.correlationId);
+        reject(abortedRequestError);
+      };
       this.pending.set(
         metadata.correlationId,
-        new PendingListOffsetsRequest(request, done)
+        new PendingListOffsetsRequest(request, done, abort)
       );
 
       Promise.all(
@@ -153,5 +163,10 @@ export class RequestManager {
 
   handlePartitionClose(partition: PartitionInfo): void {
     this.pending.forEach((request) => request.handlePartitionClose(partition));
+  }
+
+  close() {
+    this.pending.forEach((request) => request.abort());
+    this.socket.close();
   }
 }

@@ -22,6 +22,7 @@ export class SocketManager {
   private readonly partitionHandler: PartitionHandler;
 
   private readonly sockets: SocketState;
+  private readonly controller: AbortController;
 
   constructor(env: Env, partitionHandler: PartitionHandler) {
     this.env = env;
@@ -31,6 +32,7 @@ export class SocketManager {
       active: new Map<SocketId, WebSocket>(),
       pending: new Map<SocketId, Promise<WebSocket>>(),
     };
+    this.controller = new AbortController();
   }
 
   // Send a WebSocket message to the given partition
@@ -71,6 +73,7 @@ export class SocketManager {
         headers: {
           Upgrade: "websocket",
         },
+        signal: this.controller.signal,
       })
       .then((response) => {
         // Unmark the connection as pending. If there is no WebSocket in the
@@ -110,5 +113,12 @@ export class SocketManager {
     // created before this connection is ready to use
     this.sockets.pending.set(partition.id, socketPromise);
     return socketPromise;
+  }
+
+  close() {
+    // Close all open conections
+    this.sockets.active.forEach((socket) => socket.close());
+    // Abort pending connections
+    this.controller.abort();
   }
 }

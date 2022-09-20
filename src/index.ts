@@ -32,6 +32,9 @@ export default {
           console.log(`Error while handling request: ${error.message}`)
         );
     });
+    server.addEventListener("close", () => {
+      session.close();
+    });
 
     return new Response(null, {
       status: 101,

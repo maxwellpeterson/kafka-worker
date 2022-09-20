@@ -112,4 +112,8 @@ export class Session {
 
     return encodeKafkaMetadataResponse(encoder, response);
   }
+
+  close() {
+    this.internal.close();
+  }
 }
