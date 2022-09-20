@@ -19,7 +19,6 @@ import {
   decodeKafkaProduceResponse,
   encodeKafkaProduceRequest,
 } from "src/protocol/kafka/produce";
-import { globalBrokerId } from "src/state/cluster";
 import { base64, fillMessageSet } from "test/common";
 
 class GatewayConn {
@@ -195,7 +194,7 @@ describe("Kafka API", () => {
       "initial offsets",
       [
         makeListOffsetsPair(0, {
-          replicaId: globalBrokerId,
+          replicaId: -1,
           topics: [
             {
               name: "test-topic",
@@ -218,7 +217,7 @@ describe("Kafka API", () => {
           },
         ]),
         makeListOffsetsPair(1, {
-          replicaId: globalBrokerId,
+          replicaId: -1,
           topics: [
             {
               name: "test-topic",
@@ -241,7 +240,7 @@ describe("Kafka API", () => {
           },
         ]),
         makeListOffsetsPair(1, {
-          replicaId: globalBrokerId,
+          replicaId: -1,
           topics: [
             {
               name: "test-topic",
@@ -264,7 +263,7 @@ describe("Kafka API", () => {
           },
         ]),
         makeListOffsetsPair(1, {
-          replicaId: globalBrokerId,
+          replicaId: -1,
           topics: [
             {
               name: "test-topic",

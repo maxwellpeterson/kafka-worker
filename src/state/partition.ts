@@ -122,6 +122,8 @@ export class Partition {
     const currentChunk = await this.getCurrentChunk(cursor);
     console.log(`[Partition DO] Chunk: ${stringify(currentChunk)}`);
 
+    const entries: Record<string, OffsetInfo | Chunk> = {};
+
     for (
       let chunk = currentChunk;
       !filler.done();
@@ -129,11 +131,14 @@ export class Partition {
     ) {
       cursor.nextOffset += BigInt(filler.fillChunk(chunk));
       cursor.currentChunk = chunkKey(chunk);
-      await this.state.storage.put(offsetInfoKey, cursor);
+      entries[chunkKey(chunk)] = chunk;
+
       console.log(`[Partition DO] Updated cursor: ${stringify(cursor)}`);
-      await this.state.storage.put(chunkKey(chunk), chunk);
       console.log(`[Partition DO] Updated chunk: ${stringify(chunk)}`);
     }
+
+    entries[offsetInfoKey] = cursor;
+    await this.state.storage.put(entries);
 
     return { errorCode: ErrorCode.None, baseOffset };
   }
