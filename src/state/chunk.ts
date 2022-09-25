@@ -14,7 +14,7 @@ export const prepareMessageSet = (
   messageSet: MessageSet,
   initialOffset: Int64
 ): ChunkFiller => {
-  // ??
+  // TODO: What is going on here? Node-specific weirdness?
   const view = new DataView(
     messageSet.buffer,
     messageSet.byteOffset,

@@ -1,5 +1,5 @@
 import { Session } from "src/client/session";
-import { Env } from "src/common";
+import { Env, stringify } from "src/common";
 
 export { Cluster } from "src/state/cluster";
 export { Partition } from "src/state/partition";
@@ -9,6 +9,7 @@ export default {
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("Expected Upgrade: websocket", { status: 426 });
     }
+    console.log(`Opening new client connection!`);
 
     const session = new Session(env);
     const webSocketPair = new WebSocketPair();
@@ -28,8 +29,8 @@ export default {
             server.send(response);
           }
         })
-        .catch((error: Error) =>
-          console.log(`Error while handling request: ${error.message}`)
+        .catch((error) =>
+          console.log(`Error while handling request: ${stringify(error)}`)
         );
     });
     server.addEventListener("close", () => {

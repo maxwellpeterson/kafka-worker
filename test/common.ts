@@ -20,6 +20,7 @@ export const base64 = (buffer: ArrayBuffer): string => {
 // Generate an arbitrary message set for testing
 export const fillMessageSet = (
   numMessages: number,
+  baseOffset = BigInt(0),
   keySizes = [5, 17, 76, 32, 57],
   valueSizes = [48, 128, 155, 96, 67]
 ): MessageSet => {
@@ -29,7 +30,7 @@ export const fillMessageSet = (
     const valueSize = valueSizes[i % valueSizes.length];
 
     // Write message offset (discarded by broker)
-    encoder.writeInt64(BigInt(i));
+    encoder.writeInt64(baseOffset + BigInt(i));
     // Write message size (crc + magic byte + attributes + (size +) key + (size +) value)
     encoder.writeInt32(
       int32Size +

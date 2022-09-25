@@ -1,17 +1,23 @@
 import {
+  PendingFetchRequest,
   PendingListOffsetsRequest,
   PendingProduceRequest,
   PendingRequest,
 } from "src/client/pending-request";
 import { SocketManager } from "src/client/socket-manager";
-import { Env } from "src/common";
+import { AbortedRequestError, Env } from "src/common";
 import { Acks } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import { RequestMetadata, encodeRequestHeader } from "src/protocol/header";
 import { PartitionApiKey } from "src/protocol/internal/common";
+import { encodeInternalFetchRequest } from "src/protocol/internal/fetch";
 import { encodeInternalListOffsetsRequest } from "src/protocol/internal/list-offsets";
 import { encodeInternalProduceRequest } from "src/protocol/internal/produce";
+import {
+  KafkaFetchRequest,
+  KafkaFetchResponse,
+} from "src/protocol/kafka/fetch";
 import {
   KafkaListOffsetsRequest,
   KafkaListOffsetsResponse,
@@ -23,8 +29,6 @@ import {
 import { PartitionInfo } from "src/state/partition";
 
 type CorrelationId = number;
-
-const abortedRequestError = new Error("Request aborted");
 
 // One Kafka protocol request can operate on multiple partitions, which means
 // multiple subrequests to Partition DOs that fan out, and multiple subresponses
@@ -61,7 +65,7 @@ export class RequestManager {
         };
         const abort = () => {
           this.pending.delete(metadata.correlationId);
-          reject(abortedRequestError);
+          reject(new AbortedRequestError());
         };
         this.pending.set(
           metadata.correlationId,
@@ -103,6 +107,53 @@ export class RequestManager {
     });
   }
 
+  fetchRequest(
+    metadata: RequestMetadata,
+    request: KafkaFetchRequest
+  ): Promise<KafkaFetchResponse> {
+    return new Promise<KafkaFetchResponse>((resolve, reject) => {
+      const done = (response: KafkaFetchResponse) => {
+        this.pending.delete(metadata.correlationId);
+        resolve(response);
+      };
+      const abort = () => {
+        this.pending.delete(metadata.correlationId);
+        reject(new AbortedRequestError());
+      };
+      this.pending.set(
+        metadata.correlationId,
+        new PendingFetchRequest(request, done, abort)
+      );
+
+      // TODO: Convert to Promise.allSettled and handle errors individually
+      Promise.all(
+        request.topics.flatMap((topic) =>
+          topic.partitions.map(async (partition) => {
+            const encoder = new Encoder();
+            encodeRequestHeader(encoder, {
+              apiKey: PartitionApiKey.Fetch,
+              apiVersion: 0,
+              correlationId: metadata.correlationId,
+              clientId: metadata.clientId,
+            });
+
+            const partitionRequest = encodeInternalFetchRequest(encoder, {
+              maxWaitMs: request.maxWaitMs,
+              fetchOffset: partition.fetchOffset,
+              minBytes: request.minBytes,
+              maxBytes: partition.maxBytes,
+            });
+
+            await this.socket.sendPartition(
+              new PartitionInfo(topic.name, partition.index),
+              partitionRequest
+            );
+          })
+        )
+      ).catch(reject);
+    });
+  }
+
   listOffsetsRequest(
     metadata: RequestMetadata,
     request: KafkaListOffsetsRequest
@@ -114,7 +165,7 @@ export class RequestManager {
       };
       const abort = () => {
         this.pending.delete(metadata.correlationId);
-        reject(abortedRequestError);
+        reject(new AbortedRequestError());
       };
       this.pending.set(
         metadata.correlationId,

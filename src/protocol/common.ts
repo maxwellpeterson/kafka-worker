@@ -30,7 +30,7 @@ export const generateEnumPredicate =
 // ApiKey is an Int16
 export const ApiKey = {
   Produce: 0,
-  // Fetch: 1,
+  Fetch: 1,
   ListOffsets: 2,
   Metadata: 3,
 } as const;
@@ -46,6 +46,7 @@ export const ErrorCode = {
   UnknownTopicOrPartition: 3,
   NotLeaderForPartition: 6,
   RequestTimedOut: 7,
+  // UnsupportedCompressionType: 76
 } as const;
 export type ErrorCode = ValueOf<typeof ErrorCode>;
 export const validErrorCode = generateEnumPredicate(ErrorCode);

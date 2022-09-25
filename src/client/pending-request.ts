@@ -4,8 +4,13 @@ import {
 } from "src/client/incremental-response";
 import { ErrorCode } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
+import { decodeInternalFetchResponse } from "src/protocol/internal/fetch";
 import { decodeInternalListOffsetsResponse } from "src/protocol/internal/list-offsets";
 import { decodeInternalProduceResponse } from "src/protocol/internal/produce";
+import {
+  KafkaFetchRequest,
+  KafkaFetchResponse,
+} from "src/protocol/kafka/fetch";
 import {
   KafkaListOffsetsRequest,
   KafkaListOffsetsResponse,
@@ -33,7 +38,6 @@ export class PendingProduceRequest {
   constructor(
     request: KafkaProduceRequest,
     done: DoneHandler<KafkaProduceResponse>,
-
     abort: () => void
   ) {
     const stubResponse: KafkaProduceResponse = {
@@ -61,7 +65,10 @@ export class PendingProduceRequest {
         done(response);
       }
     );
-    this.abort = abort;
+    this.abort = () => {
+      clearTimeout(timeoutId);
+      abort();
+    };
   }
 
   handlePartitionMessage(partition: PartitionInfo, decoder: Decoder): void {
@@ -73,6 +80,62 @@ export class PendingProduceRequest {
     this.response.addPartition(partition, {
       errorCode: ErrorCode.UnknownServerError,
       baseOffset: BigInt(0),
+    });
+  }
+}
+
+export class PendingFetchRequest {
+  private readonly response: IncrementalResponse<KafkaFetchResponse>;
+  readonly abort: () => void;
+
+  constructor(
+    request: KafkaFetchRequest,
+    done: DoneHandler<KafkaFetchResponse>,
+    abort: () => void
+  ) {
+    const stubResponse: KafkaFetchResponse = {
+      topics: request.topics.map((topic) => ({
+        name: topic.name,
+        partitions: topic.partitions.map((partition) => ({
+          index: partition.index,
+          errorCode: ErrorCode.None,
+          highWatermark: BigInt(0),
+          messageSet: new Uint8Array(),
+        })),
+      })),
+    };
+
+    const timeoutId = setTimeout(() => {
+      this.response.cancel({
+        errorCode: ErrorCode.RequestTimedOut,
+        highWatermark: BigInt(0),
+        messageSet: new Uint8Array(),
+      });
+    }, request.maxWaitMs);
+
+    this.response = new IncrementalResponse<KafkaFetchResponse>(
+      stubResponse,
+      (response) => {
+        clearTimeout(timeoutId);
+        done(response);
+      }
+    );
+    this.abort = () => {
+      clearTimeout(timeoutId);
+      abort();
+    };
+  }
+
+  handlePartitionMessage(partition: PartitionInfo, decoder: Decoder): void {
+    const response = decodeInternalFetchResponse(decoder);
+    this.response.addPartition(partition, response);
+  }
+
+  handlePartitionClose(partition: PartitionInfo): void {
+    this.response.addPartition(partition, {
+      errorCode: ErrorCode.UnknownServerError,
+      highWatermark: BigInt(0),
+      messageSet: new Uint8Array(),
     });
   }
 }

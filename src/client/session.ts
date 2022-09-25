@@ -6,6 +6,10 @@ import { Encoder } from "src/protocol/encoder";
 import { RequestMetadata, decodeRequestHeader } from "src/protocol/header";
 import { KafkaDecoder, KafkaResponseEncoder } from "src/protocol/kafka/common";
 import {
+  decodeKafkaFetchRequest,
+  encodeKafkaFetchResponse,
+} from "src/protocol/kafka/fetch";
+import {
   decodeKafkaListOffsetsRequest,
   encodeKafkaListOffsetsResponse,
 } from "src/protocol/kafka/list-offsets";
@@ -48,6 +52,8 @@ export class Session {
     switch (header.apiKey) {
       case ApiKey.Produce:
         return this.handleProduceRequest(header, decoder, encoder);
+      case ApiKey.Fetch:
+        return this.handleFetchRequest(header, decoder, encoder);
       case ApiKey.ListOffsets:
         return this.handleListOffsetsRequest(header, decoder, encoder);
       case ApiKey.Metadata:
@@ -70,6 +76,20 @@ export class Session {
       return null;
     }
     return encodeKafkaProduceResponse(encoder, response);
+  }
+
+  private async handleFetchRequest(
+    metadata: RequestMetadata,
+    decoder: Decoder,
+    encoder: Encoder
+  ): Promise<ArrayBuffer> {
+    const request = decodeKafkaFetchRequest(decoder);
+    console.log(`Fetch request: ${stringify(request)}`);
+
+    const response = await this.internal.fetchRequest(metadata, request);
+    console.log(`Fetch response: ${stringify(response)}`);
+
+    return encodeKafkaFetchResponse(encoder, response);
   }
 
   private async handleListOffsetsRequest(

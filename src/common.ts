@@ -24,3 +24,10 @@ export const stringify = <T>(value: T): string =>
     (_key, value) => (typeof value === "bigint" ? value.toString() : value),
     2
   );
+
+export class AbortedRequestError extends Error {
+  constructor(message?: string) {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}

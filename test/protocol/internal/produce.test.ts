@@ -1,6 +1,4 @@
 import { Acks, ErrorCode } from "src/protocol/common";
-import { Decoder } from "src/protocol/decoder";
-import { Encoder } from "src/protocol/encoder";
 import {
   InternalProduceRequest,
   InternalProduceResponse,

@@ -1,5 +1,25 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Kafka API fetch: fetch on empty partition 1`] = `"AAAAKgAAAAAAAAABAAp0ZXN0LXRvcGljAAAAAQAAAAAABwAAAAAAAAAAAAAAAA=="`;
+
+exports[`Kafka API fetch: fetch on empty partition 2`] = `
+Object {
+  "topics": Array [
+    Object {
+      "name": "test-topic",
+      "partitions": Array [
+        Object {
+          "errorCode": 7,
+          "highWatermark": 0n,
+          "index": 0,
+          "messageSet": Uint8Array [],
+        },
+      ],
+    },
+  ],
+}
+`;
+
 exports[`Kafka API listOffsets: full offset list after producing records 1`] = `"AAAAJgAAAAAAAAABAAp0ZXN0LXRvcGljAAAAAQAAAAAAAAAAAAAAAAAA"`;
 
 exports[`Kafka API listOffsets: full offset list after producing records 2`] = `
@@ -305,9 +325,9 @@ Object {
 }
 `;
 
-exports[`Kafka API produce: send one message to one partiton 1`] = `"AAAAJgAAAAUAAAABAAp0ZXN0LXRvcGljAAAAAQAAAU0AAAAAAAAAAAAA"`;
+exports[`Kafka API produce: send one message to one partition 1`] = `"AAAAJgAAAAUAAAABAAp0ZXN0LXRvcGljAAAAAQAAAU0AAAAAAAAAAAAA"`;
 
-exports[`Kafka API produce: send one message to one partiton 2`] = `
+exports[`Kafka API produce: send one message to one partition 2`] = `
 Object {
   "topics": Array [
     Object {

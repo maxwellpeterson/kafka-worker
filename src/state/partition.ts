@@ -1,4 +1,4 @@
-import { Env, stringify } from "src/common";
+import { AbortedRequestError, Env } from "src/common";
 import { Acks, ErrorCode, Int64, MessageSet } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
@@ -8,6 +8,12 @@ import {
   PartitionApiKey,
   validPartitionApiKey,
 } from "src/protocol/internal/common";
+import {
+  InternalFetchRequest,
+  InternalFetchResponse,
+  decodeInternalFetchRequest,
+  encodeInternalFetchResponse,
+} from "src/protocol/internal/fetch";
 import {
   InternalListOffsetsRequest,
   InternalListOffsetsResponse,
@@ -20,28 +26,37 @@ import {
   encodeInternalProduceResponse,
 } from "src/protocol/internal/produce";
 import { Chunk, prepareMessageSet } from "src/state/chunk";
+import { PendingFetch } from "src/state/pending-fetch";
 
 export const partitionStubUrl = "https://partition.state";
 
 interface OffsetInfo {
   nextOffset: Int64;
-  currentChunk: string | null;
+  chunkOffsets: Int64[];
 }
 const offsetInfoKey = "offset-info";
 const initialOffsetInfo = (): OffsetInfo => ({
   nextOffset: BigInt(0),
-  currentChunk: null,
+  chunkOffsets: [],
 });
+
+type ChunkId = string;
+const chunkIdPrefix = "chunk";
+
+type RequestId = number;
+interface PartitionRequestMetadata extends RequestMetadata {
+  requestId: RequestId;
+}
 
 export class Partition {
   private readonly state: DurableObjectState;
-  private readonly env: Env;
-
   private readonly chunkSize: number;
+
+  private readonly pending = new Map<RequestId, PendingFetch>();
+  private nextRequestId = 0;
 
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
-    this.env = env;
 
     this.chunkSize = parseInt(env.PARTITION_CHUNK_SIZE);
   }
@@ -63,7 +78,10 @@ export class Partition {
 
       this.handleRequest(event.data)
         .then((response) => {
-          if (response !== null) {
+          if (
+            response !== null &&
+            server.readyState === WebSocket.READY_STATE_OPEN
+          ) {
             server.send(response);
           }
         })
@@ -74,6 +92,9 @@ export class Partition {
             }`
           )
         );
+    });
+    server.addEventListener("close", () => {
+      this.pending.forEach((pending) => pending.abort());
     });
 
     return new Response(null, {
@@ -89,16 +110,21 @@ export class Partition {
     const header = decodeRequestHeader(decoder, validPartitionApiKey);
     const encoder = new InternalResponseEncoder(header.correlationId);
 
+    const metadata = { ...header, requestId: this.nextRequestId };
+    this.nextRequestId++;
+
     switch (header.apiKey) {
       case PartitionApiKey.Produce:
-        return this.handleProduceRequest(header, decoder, encoder);
+        return this.handleProduceRequest(metadata, decoder, encoder);
+      case PartitionApiKey.Fetch:
+        return this.handleFetchRequest(metadata, decoder, encoder);
       case PartitionApiKey.ListOffsets:
-        return this.handleListOffsetsRequest(header, decoder, encoder);
+        return this.handleListOffsetsRequest(metadata, decoder, encoder);
     }
   }
 
   private async handleProduceRequest(
-    metadata: RequestMetadata,
+    metadata: PartitionRequestMetadata,
     decoder: Decoder,
     encoder: Encoder
   ): Promise<ArrayBuffer | null> {
@@ -115,30 +141,34 @@ export class Partition {
     messageSet: MessageSet
   ): Promise<InternalProduceResponse> {
     const cursor = await this.getCursor();
-    console.log(`[Partition DO] Cursor: ${stringify(cursor)}`);
     const baseOffset = cursor.nextOffset;
 
     const filler = prepareMessageSet(messageSet, cursor.nextOffset);
     const currentChunk = await this.getCurrentChunk(cursor);
-    console.log(`[Partition DO] Chunk: ${stringify(currentChunk)}`);
 
-    const entries: Record<string, OffsetInfo | Chunk> = {};
+    const chunks: Record<string, Chunk> = {};
 
     for (
       let chunk = currentChunk;
       !filler.done();
-      chunk = this.makeChunk(cursor.nextOffset)
+      chunk = this.nextChunk(cursor)
     ) {
+      chunks[chunkId(chunk.offsetStart)] = chunk;
       cursor.nextOffset += BigInt(filler.fillChunk(chunk));
-      cursor.currentChunk = chunkKey(chunk);
-      entries[chunkKey(chunk)] = chunk;
-
-      console.log(`[Partition DO] Updated cursor: ${stringify(cursor)}`);
-      console.log(`[Partition DO] Updated chunk: ${stringify(chunk)}`);
+      // Add freshly created chunks to chunk list (chunks that existed before
+      // this request will already have been added to the chunk list)
+      if (cursor.chunkOffsets.at(-1) !== chunk.offsetStart) {
+        cursor.chunkOffsets.push(chunk.offsetStart);
+      }
     }
 
-    entries[offsetInfoKey] = cursor;
-    await this.state.storage.put(entries);
+    await this.state.storage.put<Chunk | OffsetInfo>({
+      ...chunks,
+      [offsetInfoKey]: cursor,
+    });
+    this.pending.forEach((pending) =>
+      pending.addChunks(cursor.nextOffset, Object.values(chunks))
+    );
 
     return { errorCode: ErrorCode.None, baseOffset };
   }
@@ -151,24 +181,96 @@ export class Partition {
   }
 
   private async getCurrentChunk(cursor: OffsetInfo): Promise<Chunk> {
-    if (!cursor.currentChunk) {
-      return this.makeChunk(cursor.nextOffset);
+    const currentChunkStart = cursor.chunkOffsets.at(-1);
+    if (currentChunkStart === undefined) {
+      return this.nextChunk(cursor);
     }
-    // Chunk must exist, because offset and chunk are updated atomically
-    return this.state.storage.get<Chunk>(cursor.currentChunk) as Promise<Chunk>;
+    // Chunk must exist, because offset and chunk are updated together
+    return this.state.storage.get<Chunk>(
+      chunkId(currentChunkStart)
+    ) as Promise<Chunk>;
   }
 
-  private makeChunk(offsetStart: Int64): Chunk {
+  private nextChunk(cursor: OffsetInfo): Chunk {
     return {
-      offsetStart,
+      offsetStart: cursor.nextOffset,
       buffer: new ArrayBuffer(this.chunkSize),
       frames: [],
       nextIndex: 0,
     };
   }
 
+  private async handleFetchRequest(
+    metadata: PartitionRequestMetadata,
+    decoder: Decoder,
+    encoder: Encoder
+  ): Promise<ArrayBuffer | null> {
+    try {
+      const request = decodeInternalFetchRequest(decoder);
+      const response = await this.fillMessageSet(metadata, request);
+      return encodeInternalFetchResponse(encoder, response);
+    } catch (e) {
+      if (e instanceof AbortedRequestError) {
+        return null;
+      }
+      return encodeInternalFetchResponse(encoder, {
+        errorCode: ErrorCode.UnknownServerError,
+        highWatermark: BigInt(0),
+        messageSet: new Uint8Array(),
+      });
+    }
+  }
+
+  private async fillMessageSet(
+    metadata: PartitionRequestMetadata,
+    request: InternalFetchRequest
+  ): Promise<InternalFetchResponse> {
+    const cursor = await this.getCursor();
+    if (request.fetchOffset < 0 || request.fetchOffset > cursor.nextOffset) {
+      return {
+        errorCode: ErrorCode.OffsetOutOfRange,
+        highWatermark: cursor.nextOffset,
+        messageSet: new Uint8Array(),
+      };
+    }
+
+    // The index of the chunk one position to the right of the chunk that the
+    // fetch request should start from (could be a binary search)
+    const startChunkRight = cursor.chunkOffsets.findIndex(
+      (chunkOffset) => request.fetchOffset < chunkOffset
+    );
+    // The index of the chunk that the fetch request should start from
+    const startChunk =
+      startChunkRight === -1
+        ? // Start from the most recent chunk
+          cursor.chunkOffsets.length - 1
+        : startChunkRight - 1;
+    const maxChunks = Math.ceil(request.maxBytes / this.chunkSize) + 1;
+
+    // Load the subset of chunks we need to read from storage
+    const chunks = await this.state.storage.get<Chunk>(
+      cursor.chunkOffsets
+        .slice(startChunk, startChunk + maxChunks)
+        .map((chunkOffset) => chunkId(chunkOffset))
+    );
+
+    return new Promise<InternalFetchResponse>((resolve, reject) => {
+      const done = (response: InternalFetchResponse) => {
+        this.pending.delete(metadata.requestId);
+        resolve(response);
+      };
+      const abort = () => {
+        this.pending.delete(metadata.requestId);
+        reject(new AbortedRequestError());
+      };
+      const pending = new PendingFetch(request, done, abort);
+      this.pending.set(metadata.requestId, pending);
+      pending.addChunks(cursor.nextOffset, chunks.values());
+    });
+  }
+
   private async handleListOffsetsRequest(
-    metadata: RequestMetadata,
+    metadata: PartitionRequestMetadata,
     decoder: Decoder,
     encoder: Encoder
   ): Promise<ArrayBuffer> {
@@ -205,8 +307,8 @@ export class Partition {
   }
 }
 
-const chunkKey = (chunk: Chunk): string =>
-  `chunk-${chunk.offsetStart.toString()}`;
+const chunkId = (offsetStart: Chunk["offsetStart"]): ChunkId =>
+  `${chunkIdPrefix}-${offsetStart.toString()}`;
 
 export class PartitionInfo {
   readonly topic: string;

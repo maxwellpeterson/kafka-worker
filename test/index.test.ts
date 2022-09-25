@@ -3,6 +3,12 @@ import { Acks, ApiKey, Int32 } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { KafkaDecoder, KafkaRequestEncoder } from "src/protocol/kafka/common";
 import {
+  KafkaFetchRequest,
+  KafkaFetchResponse,
+  decodeKafkaFetchResponse,
+  encodeKafkaFetchRequest,
+} from "src/protocol/kafka/fetch";
+import {
   KafkaListOffsetsRequest,
   KafkaListOffsetsResponse,
   decodeKafkaListOffsetsResponse,
@@ -123,10 +129,24 @@ const makeProducePair = (
   });
   const request = encodeKafkaProduceRequest(encoder, {
     acks: Acks.Leader,
-    timeoutMs: 100,
+    timeoutMs: 10_000,
     topics,
   });
   return [correlationId, request, decodeKafkaProduceResponse];
+};
+
+const makeFetchPair = (
+  correlationId: Int32,
+  request: KafkaFetchRequest
+): RequestResponse<KafkaFetchResponse> => {
+  const encoder = new KafkaRequestEncoder({
+    apiKey: ApiKey.Fetch,
+    apiVersion: 0,
+    correlationId,
+    clientId: null,
+  });
+  const encoded = encodeKafkaFetchRequest(encoder, request);
+  return [correlationId, encoded, decodeKafkaFetchResponse];
 };
 
 const makeListOffsetsPair = (
@@ -145,7 +165,10 @@ const makeListOffsetsPair = (
 
 describe("Kafka API", () => {
   const cases: TestCase<
-    KafkaMetadataResponse | KafkaProduceResponse | KafkaListOffsetsResponse
+    | KafkaMetadataResponse
+    | KafkaProduceResponse
+    | KafkaListOffsetsResponse
+    | KafkaFetchResponse
   >[] = [
     ["metadata", "fetch all topics", [makeMetadataPair(5, [])]],
     ["metadata", "fetch specific topic", [makeMetadataPair(5, ["test-topic"])]],
@@ -161,7 +184,7 @@ describe("Kafka API", () => {
     ],
     [
       "produce",
-      "send one message to one partiton",
+      "send one message to one partition",
       [
         makeProducePair(5, [
           {
@@ -275,6 +298,25 @@ describe("Kafka API", () => {
         }),
       ],
     ],
+    [
+      "fetch",
+      "fetch on empty partition",
+      [
+        makeFetchPair(0, {
+          replicaId: -1,
+          maxWaitMs: 500,
+          minBytes: 256,
+          topics: [
+            {
+              name: "test-topic",
+              partitions: [
+                { index: 0, fetchOffset: BigInt(0), maxBytes: 8192 },
+              ],
+            },
+          ],
+        }),
+      ],
+    ],
   ];
 
   test.each(cases)("%s: %s", async (_api, _name, pairs) => {
@@ -292,5 +334,87 @@ describe("Kafka API", () => {
     }
 
     gateway.close();
+  });
+
+  test("produce message set then fetch message set", async () => {
+    const gateway = new GatewayConn();
+    const messageSet = fillMessageSet(5);
+
+    const produceCorrelationId = 0;
+    const produceEncoder = new KafkaRequestEncoder({
+      apiKey: ApiKey.Produce,
+      apiVersion: 0,
+      correlationId: produceCorrelationId,
+      clientId: null,
+    });
+    const produceRequest = encodeKafkaProduceRequest(produceEncoder, {
+      acks: Acks.Leader,
+      timeoutMs: 10_000,
+      topics: [{ name: "test-topic", partitions: [{ index: 0, messageSet }] }],
+    });
+    const produceResponse = await gateway.request(produceRequest);
+    const produceDecoder = new KafkaDecoder(produceResponse);
+    expect(produceDecoder.readInt32()).toEqual(produceCorrelationId);
+    expect(decodeKafkaProduceResponse(produceDecoder)).toMatchInlineSnapshot(`
+      Object {
+        "topics": Array [
+          Object {
+            "name": "test-topic",
+            "partitions": Array [
+              Object {
+                "baseOffset": 0n,
+                "errorCode": 0,
+                "index": 0,
+              },
+            ],
+          },
+        ],
+      }
+    `);
+
+    const fetchCorrelationId = 1;
+    const fetchEncoder = new KafkaRequestEncoder({
+      apiKey: ApiKey.Fetch,
+      apiVersion: 0,
+      correlationId: fetchCorrelationId,
+      clientId: null,
+    });
+    const fetchRequest = encodeKafkaFetchRequest(fetchEncoder, {
+      replicaId: -1,
+      maxWaitMs: 1000,
+      minBytes: 64,
+      topics: [
+        {
+          name: "test-topic",
+          partitions: [{ index: 0, fetchOffset: BigInt(0), maxBytes: 8192 }],
+        },
+      ],
+    });
+    const fetchResponse = await gateway.request(fetchRequest);
+    const fetchDecoder = new KafkaDecoder(fetchResponse);
+    expect(fetchDecoder.readInt32()).toEqual(fetchCorrelationId);
+    const fetchResponseDecoded = decodeKafkaFetchResponse(fetchDecoder);
+    expect(fetchResponseDecoded.topics[0].partitions[0].messageSet).toEqual(
+      messageSet
+    );
+    // Exclude buffer data from inline snapshot (because it's huge)
+    fetchResponseDecoded.topics[0].partitions[0].messageSet = new Uint8Array();
+    expect(fetchResponseDecoded).toMatchInlineSnapshot(`
+      Object {
+        "topics": Array [
+          Object {
+            "name": "test-topic",
+            "partitions": Array [
+              Object {
+                "errorCode": 0,
+                "highWatermark": 5n,
+                "index": 0,
+                "messageSet": Uint8Array [],
+              },
+            ],
+          },
+        ],
+      }
+    `);
   });
 });
