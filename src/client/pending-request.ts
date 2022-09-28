@@ -105,25 +105,11 @@ export class PendingFetchRequest {
       })),
     };
 
-    const timeoutId = setTimeout(() => {
-      this.response.cancel({
-        errorCode: ErrorCode.RequestTimedOut,
-        highWatermark: BigInt(0),
-        messageSet: new Uint8Array(),
-      });
-    }, request.maxWaitMs);
-
     this.response = new IncrementalResponse<KafkaFetchResponse>(
       stubResponse,
-      (response) => {
-        clearTimeout(timeoutId);
-        done(response);
-      }
+      done
     );
-    this.abort = () => {
-      clearTimeout(timeoutId);
-      abort();
-    };
+    this.abort = abort;
   }
 
   handlePartitionMessage(partition: PartitionInfo, decoder: Decoder): void {

@@ -8,34 +8,37 @@ import { Chunk } from "src/state/chunk";
 export class PendingFetch {
   private readonly request: InternalFetchRequest;
 
+  private highWatermark: Int64;
   private readonly messageSet: MessageSet;
   private nextOffset: Int64;
   private bytesWritten = 0;
 
-  private readonly done: (response: InternalFetchResponse) => void;
+  private readonly done: () => void;
   readonly abort: () => void;
 
   constructor(
     request: InternalFetchRequest,
+    highWatermark: Int64,
     done: (response: InternalFetchResponse) => void,
     abort: () => void
   ) {
     this.request = request;
 
+    this.highWatermark = highWatermark;
     this.messageSet = new Uint8Array(new ArrayBuffer(request.maxBytes));
     this.nextOffset = request.fetchOffset;
 
-    // We use this timeout to prevent dangling fetch requests from accumulating
-    // in DO memory. By the time this timeout fires the gateway worker should
-    // have already canceled the client request, so we abort the request without
-    // a response instead of sending anything back to the gateway worker.
     const timeoutId = setTimeout(() => {
-      this.abort();
+      this.done();
     }, request.maxWaitMs);
 
-    this.done = (response) => {
+    this.done = () => {
       clearTimeout(timeoutId);
-      done(response);
+      done({
+        errorCode: ErrorCode.None,
+        highWatermark: this.highWatermark,
+        messageSet: this.messageSet.subarray(0, this.bytesWritten),
+      });
     };
     this.abort = () => {
       clearTimeout(timeoutId);
@@ -44,6 +47,8 @@ export class PendingFetch {
   }
 
   addChunks(highWatermark: Int64, chunks: Iterable<Chunk>) {
+    this.highWatermark = highWatermark;
+
     for (const chunk of chunks) {
       const messageSetFull = this.readChunk(chunk);
       // This covers a weird case where individual messages are larger than the
@@ -53,11 +58,7 @@ export class PendingFetch {
       // partial messages to be returned (which would cover this case), but as
       // implemented we only return full messages.
       if (messageSetFull || this.bytesWritten >= this.request.minBytes) {
-        this.done({
-          errorCode: ErrorCode.None,
-          highWatermark,
-          messageSet: this.messageSet.subarray(0, this.bytesWritten),
-        });
+        this.done();
       }
     }
   }

@@ -263,7 +263,7 @@ export class Partition {
         this.pending.delete(metadata.requestId);
         reject(new AbortedRequestError());
       };
-      const pending = new PendingFetch(request, done, abort);
+      const pending = new PendingFetch(request, cursor.nextOffset, done, abort);
       this.pending.set(metadata.requestId, pending);
       pending.addChunks(cursor.nextOffset, chunks.values());
     });

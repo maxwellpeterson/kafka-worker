@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Kafka API fetch: fetch on empty partition 1`] = `"AAAAKgAAAAAAAAABAAp0ZXN0LXRvcGljAAAAAQAAAAAABwAAAAAAAAAAAAAAAA=="`;
+exports[`Kafka API fetch: fetch on empty partition 1`] = `"AAAAKgAAAAAAAAABAAp0ZXN0LXRvcGljAAAAAQAAAAAAAAAAAAAAAAAAAAAAAA=="`;
 
 exports[`Kafka API fetch: fetch on empty partition 2`] = `
 Object {
@@ -9,7 +9,7 @@ Object {
       "name": "test-topic",
       "partitions": Array [
         Object {
-          "errorCode": 7,
+          "errorCode": 0,
           "highWatermark": 0n,
           "index": 0,
           "messageSet": Uint8Array [],
