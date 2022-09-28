@@ -43,7 +43,7 @@ const initialOffsetInfo = (): OffsetInfo => ({
 type ChunkId = string;
 const chunkIdPrefix = "chunk";
 
-type RequestId = number;
+type RequestId = string;
 interface PartitionRequestMetadata extends RequestMetadata {
   requestId: RequestId;
 }
@@ -53,7 +53,7 @@ export class Partition {
   private readonly chunkSize: number;
 
   private readonly pending = new Map<RequestId, PendingFetch>();
-  private nextRequestId = 0;
+  private connCount = 0;
 
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
@@ -69,6 +69,12 @@ export class Partition {
     const webSocketPair = new WebSocketPair();
     const [client, server] = Object.values(webSocketPair);
 
+    const requestPrefix = this.connCount;
+    this.connCount++;
+
+    const requestIdDelim = "_";
+    let requestCount = 0;
+
     server.accept();
     server.addEventListener("message", (event) => {
       if (typeof event.data === "string") {
@@ -76,10 +82,20 @@ export class Partition {
         return;
       }
 
-      this.handleRequest(event.data)
+      // Every internal request sent to this DO is uniquely identified (within
+      // each in-memory lifetime) by the tuple (connCount, requestCount), where
+      // connCount identifies the socket connection that the request belongs to,
+      // and requestCount identifies the request within the scope of its socket
+      // connection
+      const requestId = `${requestPrefix}${requestIdDelim}${requestCount}`;
+      requestCount++;
+
+      this.handleRequest(requestId, event.data)
         .then((response) => {
           if (
             response !== null &&
+            // TODO: Needed? Added because of issues related to:
+            // https://github.com/cloudflare/miniflare/issues/339
             server.readyState === WebSocket.READY_STATE_OPEN
           ) {
             server.send(response);
@@ -94,7 +110,13 @@ export class Partition {
         );
     });
     server.addEventListener("close", () => {
-      this.pending.forEach((pending) => pending.abort());
+      this.pending.forEach((request, id) => {
+        // eslint-disable-next-line @typescript-eslint/prefer-string-starts-ends-with
+        if (id.slice(0, id.indexOf(requestIdDelim)) === `${requestPrefix}`) {
+          // Abort pending requests tied to this connection
+          request.abort();
+        }
+      });
     });
 
     return new Response(null, {
@@ -104,14 +126,14 @@ export class Partition {
   }
 
   private async handleRequest(
+    requestId: RequestId,
     buffer: ArrayBuffer
   ): Promise<ArrayBuffer | null> {
     const decoder = new Decoder(buffer);
     const header = decodeRequestHeader(decoder, validPartitionApiKey);
     const encoder = new InternalResponseEncoder(header.correlationId);
 
-    const metadata = { ...header, requestId: this.nextRequestId };
-    this.nextRequestId++;
+    const metadata = { ...header, requestId };
 
     switch (header.apiKey) {
       case PartitionApiKey.Produce:
