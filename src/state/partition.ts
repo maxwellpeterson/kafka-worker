@@ -165,18 +165,24 @@ export class Partition {
     const cursor = await this.getCursor();
     const baseOffset = cursor.nextOffset;
 
-    const filler = prepareMessageSet(messageSet, cursor.nextOffset);
+    const prepared = prepareMessageSet(messageSet, cursor.nextOffset);
+    if ("error" in prepared) {
+      return {
+        errorCode: prepared.error,
+        baseOffset: BigInt(0),
+      };
+    }
     const currentChunk = await this.getCurrentChunk(cursor);
 
     const chunks: Record<string, Chunk> = {};
 
     for (
       let chunk = currentChunk;
-      !filler.done();
+      !prepared.filler.done();
       chunk = this.nextChunk(cursor)
     ) {
       chunks[chunkId(chunk.offsetStart)] = chunk;
-      cursor.nextOffset += BigInt(filler.fillChunk(chunk));
+      cursor.nextOffset += BigInt(prepared.filler.fillChunk(chunk));
       // Add freshly created chunks to chunk list (chunks that existed before
       // this request will already have been added to the chunk list)
       if (cursor.chunkOffsets.at(-1) !== chunk.offsetStart) {

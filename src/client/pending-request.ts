@@ -78,7 +78,7 @@ export class PendingProduceRequest {
 
   handlePartitionClose(partition: PartitionInfo): void {
     this.response.addPartition(partition, {
-      errorCode: ErrorCode.UnknownServerError,
+      errorCode: ErrorCode.NetworkException,
       baseOffset: BigInt(0),
     });
   }
@@ -119,7 +119,7 @@ export class PendingFetchRequest {
 
   handlePartitionClose(partition: PartitionInfo): void {
     this.response.addPartition(partition, {
-      errorCode: ErrorCode.UnknownServerError,
+      errorCode: ErrorCode.NetworkException,
       highWatermark: BigInt(0),
       messageSet: new Uint8Array(),
     });
@@ -160,7 +160,7 @@ export class PendingListOffsetsRequest {
 
   handlePartitionClose(partition: PartitionInfo): void {
     this.response.addPartition(partition, {
-      errorCode: ErrorCode.UnknownServerError,
+      errorCode: ErrorCode.NetworkException,
       oldStyleOffsets: [],
     });
   }

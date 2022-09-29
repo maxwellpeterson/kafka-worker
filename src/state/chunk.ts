@@ -1,4 +1,13 @@
-import { Int64, MessageSet, int32Size, int64Size } from "src/protocol/common";
+// eslint-disable-next-line import/default
+import crc32 from "crc-32";
+import {
+  ErrorCode,
+  Int64,
+  MessageSet,
+  int32Size,
+  int64Size,
+  int8Size,
+} from "src/protocol/common";
 
 export interface Chunk {
   offsetStart: Int64;
@@ -9,11 +18,10 @@ export interface Chunk {
 // Tuple of [startIndex, size]
 export type MessageFrame = [number, number];
 
-// TODO: This should be able to return an error code
 export const prepareMessageSet = (
   messageSet: MessageSet,
   initialOffset: Int64
-): ChunkFiller => {
+): { filler: ChunkFiller } | { error: ErrorCode } => {
   // TODO: What is going on here? Node-specific weirdness?
   const view = new DataView(
     messageSet.buffer,
@@ -34,18 +42,53 @@ export const prepareMessageSet = (
 
     // Read message size field
     const messageSize = view.getInt32(viewIndex);
-    viewIndex += int32Size + messageSize;
+    if (messageSize < 0) {
+      return { error: ErrorCode.InvalidMessageSize };
+    }
+    viewIndex += int32Size;
+
+    // Verify crc of message contents
+    const crcExpected = view.getInt32(viewIndex);
+    // eslint-disable-next-line import/no-named-as-default-member
+    const crcActual = crc32.buf(
+      new Uint8Array(
+        view.buffer,
+        view.byteOffset + viewIndex + int32Size,
+        messageSize - int32Size
+      )
+    );
+    if (crcActual !== crcExpected) {
+      return { error: ErrorCode.CorruptMessage };
+    }
+
+    // Depending on the value of the magic byte, there may or may not be an
+    // "attributes" byte right after it
+    // https://kafka.apache.org/08/documentation/#messageformat
+    const magicByte = view.getInt8(viewIndex + int32Size);
+    if (magicByte === 1) {
+      // Check attributes byte to make sure that message set is not compressed
+      const attributes = view.getInt8(viewIndex + int32Size + int8Size);
+      if (attributes !== 0) {
+        console.log(`Attributes check failed, attributes: ${attributes}`);
+        // There isn't a good error code for this that dates back to 0.8.0
+        return { error: ErrorCode.UnknownServerError };
+      }
+    } else if (magicByte !== 0) {
+      // The magic byte can only be 0 or 1
+      console.log(`Magic byte check failed, magic byte: ${magicByte}`);
+      // There isn't a good error code for this that dates back to 0.8.0
+      return { error: ErrorCode.UnknownServerError };
+    }
 
     // Record starting index and size of message
     frames.push([frameStart, int64Size + int32Size + messageSize]);
-
-    // TODO: CRC check!
+    viewIndex += messageSize;
   }
 
-  return new ChunkFiller(messageSet, frames);
+  return { filler: new ChunkFiller(messageSet, frames) };
 };
 
-class ChunkFiller {
+export class ChunkFiller {
   private messageSet: MessageSet;
   private frames: MessageFrame[];
 

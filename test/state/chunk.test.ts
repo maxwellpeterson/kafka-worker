@@ -1,4 +1,4 @@
-import { Chunk, prepareMessageSet } from "src/state/chunk";
+import { Chunk, ChunkFiller, prepareMessageSet } from "src/state/chunk";
 import { base64, fillMessageSet } from "test/common";
 
 describe("prepareMessageSet", () => {
@@ -51,10 +51,12 @@ describe("prepareMessageSet", () => {
 
   test.each(cases)("one chunk: %s", (_name, numMessages, chunk) => {
     const initialChunk = structuredClone(chunk) as Chunk;
-    const filler = prepareMessageSet(
+    const result = prepareMessageSet(
       fillMessageSet(numMessages),
       initialChunk.offsetStart
     );
+    expect("error" in result).toEqual(false);
+    const filler = (result as { filler: ChunkFiller }).filler;
 
     const messagesFilled = filler.fillChunk(chunk);
     expect(messagesFilled).toEqual(numMessages);

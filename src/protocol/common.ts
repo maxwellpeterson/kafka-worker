@@ -28,6 +28,7 @@ export const generateEnumPredicate =
     Object.values<V>(enumObj).includes(value);
 
 // ApiKey is an Int16
+// https://kafka.apache.org/protocol.html#protocol_api_keys
 export const ApiKey = {
   Produce: 0,
   Fetch: 1,
@@ -38,20 +39,23 @@ export type ApiKey = ValueOf<typeof ApiKey>;
 export const validApiKey = generateEnumPredicate(ApiKey);
 
 // ErrorCode is an Int16
+// https://kafka.apache.org/protocol.html#protocol_error_codes
 export const ErrorCode = {
   UnknownServerError: -1,
   None: 0,
   OffsetOutOfRange: 1,
   CorruptMessage: 2,
   UnknownTopicOrPartition: 3,
+  InvalidMessageSize: 4,
   NotLeaderForPartition: 6,
   RequestTimedOut: 7,
-  // UnsupportedCompressionType: 76
+  NetworkException: 13,
 } as const;
 export type ErrorCode = ValueOf<typeof ErrorCode>;
 export const validErrorCode = generateEnumPredicate(ErrorCode);
 
 // Acks is an Int16
+// https://kafka.apache.org/protocol.html#The_Messages_Produce
 export const Acks = {
   None: 0,
   Leader: 1,
