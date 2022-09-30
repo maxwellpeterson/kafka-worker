@@ -70,3 +70,11 @@ export const decodeInternalFetchResponse = (
     messageSet: decoder.readMessageSet(),
   };
 };
+
+export const stubInternalFetchResponse = (
+  errorCode: ErrorCode
+): InternalFetchResponse => ({
+  errorCode,
+  highWatermark: BigInt(0),
+  messageSet: new Uint8Array(),
+});

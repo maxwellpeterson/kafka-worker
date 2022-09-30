@@ -110,3 +110,15 @@ export const decodeKafkaMetadataResponse = (
     })),
   };
 };
+
+export const stubKafkaMetadataResponse = (
+  request: KafkaMetadataRequest,
+  errorCode: ErrorCode
+): KafkaMetadataResponse => ({
+  brokers: [],
+  topics: request.topics.map((topic) => ({
+    errorCode,
+    name: topic,
+    partitions: [],
+  })),
+});

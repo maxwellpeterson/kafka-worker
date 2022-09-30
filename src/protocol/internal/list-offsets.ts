@@ -57,3 +57,10 @@ export const decodeInternalListOffsetsResponse = (
     oldStyleOffsets: decoder.readInt64Array(),
   };
 };
+
+export const stubInternalListOffsetsResponse = (
+  errorCode: ErrorCode
+): InternalListOffsetsResponse => ({
+  errorCode,
+  oldStyleOffsets: [],
+});

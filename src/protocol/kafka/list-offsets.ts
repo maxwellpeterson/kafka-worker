@@ -113,3 +113,17 @@ export const decodeKafkaListOffsetsResponse = (
     })),
   };
 };
+
+export const stubKafkaListOffsetsResponse = (
+  request: KafkaListOffsetsRequest,
+  errorCode: ErrorCode
+): KafkaListOffsetsResponse => ({
+  topics: request.topics.map((topic) => ({
+    name: topic.name,
+    partitions: topic.partitions.map((partition) => ({
+      index: partition.index,
+      errorCode,
+      oldStyleOffsets: [],
+    })),
+  })),
+});

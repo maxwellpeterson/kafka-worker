@@ -56,3 +56,10 @@ export const decodeInternalProduceResponse = (
     baseOffset: decoder.readInt64(),
   };
 };
+
+export const stubInternalProduceResponse = (
+  errorCode: ErrorCode
+): InternalProduceResponse => ({
+  errorCode,
+  baseOffset: BigInt(0),
+});

@@ -120,3 +120,17 @@ export const decodeKafkaProduceResponse = (
     })),
   };
 };
+
+export const stubKafkaProduceResponse = (
+  request: KafkaProduceRequest,
+  errorCode: ErrorCode
+): KafkaProduceResponse => ({
+  topics: request.topics.map((topic) => ({
+    name: topic.name,
+    partitions: topic.partitions.map((partition) => ({
+      index: partition.index,
+      errorCode,
+      baseOffset: BigInt(0),
+    })),
+  })),
+});

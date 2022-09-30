@@ -132,3 +132,18 @@ export const decodeKafkaFetchResponse = (
     })),
   };
 };
+
+export const stubKafkaFetchResponse = (
+  request: KafkaFetchRequest,
+  errorCode: ErrorCode
+): KafkaFetchResponse => ({
+  topics: request.topics.map((topic) => ({
+    name: topic.name,
+    partitions: topic.partitions.map((partition) => ({
+      index: partition.index,
+      errorCode,
+      highWatermark: BigInt(0),
+      messageSet: new Uint8Array(),
+    })),
+  })),
+});

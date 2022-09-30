@@ -1,6 +1,6 @@
 import { RequestManager } from "src/client/request-manager";
-import { Env, stringify } from "src/common";
-import { ApiKey, validApiKey } from "src/protocol/common";
+import { AbortedRequestError, Env, stringify } from "src/common";
+import { ApiKey, ErrorCode, validApiKey } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
 import { RequestMetadata, decodeRequestHeader } from "src/protocol/header";
@@ -8,10 +8,12 @@ import { KafkaDecoder, KafkaResponseEncoder } from "src/protocol/kafka/common";
 import {
   decodeKafkaFetchRequest,
   encodeKafkaFetchResponse,
+  stubKafkaFetchResponse,
 } from "src/protocol/kafka/fetch";
 import {
   decodeKafkaListOffsetsRequest,
   encodeKafkaListOffsetsResponse,
+  stubKafkaListOffsetsResponse,
 } from "src/protocol/kafka/list-offsets";
 import {
   decodeKafkaMetadataRequest,
@@ -20,6 +22,7 @@ import {
 import {
   decodeKafkaProduceRequest,
   encodeKafkaProduceResponse,
+  stubKafkaProduceResponse,
 } from "src/protocol/kafka/produce";
 import { fetchClusterMetadata } from "src/state/cluster";
 
@@ -69,27 +72,53 @@ export class Session {
     const request = decodeKafkaProduceRequest(decoder);
     console.log(`Produce request: ${stringify(request)}`);
 
-    const response = await this.internal.produceRequest(metadata, request);
-    console.log(`Produce response: ${stringify(response)}`);
+    try {
+      const response = await this.internal.produceRequest(metadata, request);
+      console.log(`Produce response: ${stringify(response)}`);
 
-    if (response === null) {
-      return null;
+      if (response === null) {
+        return null;
+      }
+      return encodeKafkaProduceResponse(encoder, response);
+    } catch (e) {
+      if (e instanceof AbortedRequestError) {
+        return null;
+      }
+      console.log(
+        `[Gateway Worker] Error while handling Produce request: ${stringify(e)}`
+      );
+      return encodeKafkaProduceResponse(
+        encoder,
+        stubKafkaProduceResponse(request, ErrorCode.UnknownServerError)
+      );
     }
-    return encodeKafkaProduceResponse(encoder, response);
   }
 
   private async handleFetchRequest(
     metadata: RequestMetadata,
     decoder: Decoder,
     encoder: Encoder
-  ): Promise<ArrayBuffer> {
+  ): Promise<ArrayBuffer | null> {
     const request = decodeKafkaFetchRequest(decoder);
     console.log(`Fetch request: ${stringify(request)}`);
 
-    const response = await this.internal.fetchRequest(metadata, request);
-    console.log(`Fetch response: ${stringify(response)}`);
+    try {
+      const response = await this.internal.fetchRequest(metadata, request);
+      console.log(`Fetch response: ${stringify(response)}`);
 
-    return encodeKafkaFetchResponse(encoder, response);
+      return encodeKafkaFetchResponse(encoder, response);
+    } catch (e) {
+      if (e instanceof AbortedRequestError) {
+        return null;
+      }
+      console.log(
+        `[Gateway Worker] Error while handling Fetch request: ${stringify(e)}`
+      );
+      return encodeKafkaFetchResponse(
+        encoder,
+        stubKafkaFetchResponse(request, ErrorCode.UnknownServerError)
+      );
+    }
   }
 
   private async handleListOffsetsRequest(
@@ -100,10 +129,28 @@ export class Session {
     const request = decodeKafkaListOffsetsRequest(decoder);
     console.log(`ListOffsets request: ${stringify(request)}`);
 
-    const response = await this.internal.listOffsetsRequest(metadata, request);
-    console.log(`ListOffsets response: ${stringify(response)}`);
+    try {
+      const response = await this.internal.listOffsetsRequest(
+        metadata,
+        request
+      );
+      console.log(`ListOffsets response: ${stringify(response)}`);
 
-    return encodeKafkaListOffsetsResponse(encoder, response);
+      return encodeKafkaListOffsetsResponse(encoder, response);
+    } catch (e) {
+      if (e instanceof AbortedRequestError) {
+        return null;
+      }
+      console.log(
+        `[Gateway Worker] Error while handling ListOffsets request: ${stringify(
+          e
+        )}`
+      );
+      return encodeKafkaListOffsetsResponse(
+        encoder,
+        stubKafkaListOffsetsResponse(request, ErrorCode.UnknownServerError)
+      );
+    }
   }
 
   private async handleMetadataRequest(

@@ -30,7 +30,11 @@ export default {
           }
         })
         .catch((error) =>
-          console.log(`Error while handling request: ${stringify(error)}`)
+          console.log(
+            `[Gateway Worker] Uncaught error while handling request: ${stringify(
+              error
+            )}`
+          )
         );
     });
     server.addEventListener("close", () => {

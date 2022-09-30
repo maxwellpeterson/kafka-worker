@@ -1,4 +1,4 @@
-import { AbortedRequestError, Env } from "src/common";
+import { AbortedRequestError, Env, stringify } from "src/common";
 import { Acks, ErrorCode, Int64, MessageSet } from "src/protocol/common";
 import { Decoder } from "src/protocol/decoder";
 import { Encoder } from "src/protocol/encoder";
@@ -13,17 +13,20 @@ import {
   InternalFetchResponse,
   decodeInternalFetchRequest,
   encodeInternalFetchResponse,
+  stubInternalFetchResponse,
 } from "src/protocol/internal/fetch";
 import {
   InternalListOffsetsRequest,
   InternalListOffsetsResponse,
   decodeInternalListOffsetsRequest,
   encodeInternalListOffsetsResponse,
+  stubInternalListOffsetsResponse,
 } from "src/protocol/internal/list-offsets";
 import {
   InternalProduceResponse,
   decodeInternalProduceRequest,
   encodeInternalProduceResponse,
+  stubInternalProduceResponse,
 } from "src/protocol/internal/produce";
 import { Chunk, prepareMessageSet } from "src/state/chunk";
 import { PendingFetch } from "src/state/pending-fetch";
@@ -101,11 +104,11 @@ export class Partition {
             server.send(response);
           }
         })
-        .catch((error: Error) =>
+        .catch((error) =>
           console.log(
-            `[Partition DO] Error while handling request: ${
-              error.stack ?? "no stack"
-            }`
+            `[Partition DO] Uncaught error while handling request: ${stringify(
+              error
+            )}`
           )
         );
     });
@@ -150,13 +153,23 @@ export class Partition {
     decoder: Decoder,
     encoder: Encoder
   ): Promise<ArrayBuffer | null> {
-    const request = decodeInternalProduceRequest(decoder);
-    const response = await this.appendMessageSet(request.messageSet);
+    try {
+      const request = decodeInternalProduceRequest(decoder);
+      const response = await this.appendMessageSet(request.messageSet);
 
-    if (request.acks === Acks.None) {
-      return null;
+      if (request.acks === Acks.None) {
+        return null;
+      }
+      return encodeInternalProduceResponse(encoder, response);
+    } catch (e) {
+      console.log(
+        `[Partition DO] Error while handling Produce request: ${stringify(e)}`
+      );
+      return encodeInternalProduceResponse(
+        encoder,
+        stubInternalProduceResponse(ErrorCode.UnknownServerError)
+      );
     }
-    return encodeInternalProduceResponse(encoder, response);
   }
 
   private async appendMessageSet(
@@ -241,11 +254,13 @@ export class Partition {
       if (e instanceof AbortedRequestError) {
         return null;
       }
-      return encodeInternalFetchResponse(encoder, {
-        errorCode: ErrorCode.UnknownServerError,
-        highWatermark: BigInt(0),
-        messageSet: new Uint8Array(),
-      });
+      console.log(
+        `[Partition DO] Error while handling Fetch request: ${stringify(e)}`
+      );
+      return encodeInternalFetchResponse(
+        encoder,
+        stubInternalFetchResponse(ErrorCode.UnknownServerError)
+      );
     }
   }
 
@@ -302,9 +317,21 @@ export class Partition {
     decoder: Decoder,
     encoder: Encoder
   ): Promise<ArrayBuffer> {
-    const request = decodeInternalListOffsetsRequest(decoder);
-    const response = await this.listOffsets(request);
-    return encodeInternalListOffsetsResponse(encoder, response);
+    try {
+      const request = decodeInternalListOffsetsRequest(decoder);
+      const response = await this.listOffsets(request);
+      return encodeInternalListOffsetsResponse(encoder, response);
+    } catch (e) {
+      console.log(
+        `[Partition DO] Error while handling ListOffsets request: ${stringify(
+          e
+        )}`
+      );
+      return encodeInternalListOffsetsResponse(
+        encoder,
+        stubInternalListOffsetsResponse(ErrorCode.UnknownServerError)
+      );
+    }
   }
 
   private async listOffsets(

@@ -10,14 +10,17 @@ import { decodeInternalProduceResponse } from "src/protocol/internal/produce";
 import {
   KafkaFetchRequest,
   KafkaFetchResponse,
+  stubKafkaFetchResponse,
 } from "src/protocol/kafka/fetch";
 import {
   KafkaListOffsetsRequest,
   KafkaListOffsetsResponse,
+  stubKafkaListOffsetsResponse,
 } from "src/protocol/kafka/list-offsets";
 import {
   KafkaProduceRequest,
   KafkaProduceResponse,
+  stubKafkaProduceResponse,
 } from "src/protocol/kafka/produce";
 import { PartitionInfo } from "src/state/partition";
 
@@ -40,17 +43,6 @@ export class PendingProduceRequest {
     done: DoneHandler<KafkaProduceResponse>,
     abort: () => void
   ) {
-    const stubResponse: KafkaProduceResponse = {
-      topics: request.topics.map((topic) => ({
-        name: topic.name,
-        partitions: topic.partitions.map((partition) => ({
-          index: partition.index,
-          errorCode: ErrorCode.None,
-          baseOffset: BigInt(0),
-        })),
-      })),
-    };
-
     const timeoutId = setTimeout(() => {
       this.response.cancel({
         errorCode: ErrorCode.RequestTimedOut,
@@ -59,7 +51,7 @@ export class PendingProduceRequest {
     }, request.timeoutMs);
 
     this.response = new IncrementalResponse<KafkaProduceResponse>(
-      stubResponse,
+      stubKafkaProduceResponse(request, ErrorCode.None),
       (response) => {
         clearTimeout(timeoutId);
         done(response);
@@ -93,20 +85,8 @@ export class PendingFetchRequest {
     done: DoneHandler<KafkaFetchResponse>,
     abort: () => void
   ) {
-    const stubResponse: KafkaFetchResponse = {
-      topics: request.topics.map((topic) => ({
-        name: topic.name,
-        partitions: topic.partitions.map((partition) => ({
-          index: partition.index,
-          errorCode: ErrorCode.None,
-          highWatermark: BigInt(0),
-          messageSet: new Uint8Array(),
-        })),
-      })),
-    };
-
     this.response = new IncrementalResponse<KafkaFetchResponse>(
-      stubResponse,
+      stubKafkaFetchResponse(request, ErrorCode.None),
       done
     );
     this.abort = abort;
@@ -135,19 +115,8 @@ export class PendingListOffsetsRequest {
     done: DoneHandler<KafkaListOffsetsResponse>,
     abort: () => void
   ) {
-    const stubResponse: KafkaListOffsetsResponse = {
-      topics: request.topics.map((topic) => ({
-        name: topic.name,
-        partitions: topic.partitions.map((partition) => ({
-          index: partition.index,
-          errorCode: ErrorCode.None,
-          oldStyleOffsets: [],
-        })),
-      })),
-    };
-
     this.response = new IncrementalResponse<KafkaListOffsetsResponse>(
-      stubResponse,
+      stubKafkaListOffsetsResponse(request, ErrorCode.None),
       done
     );
     this.abort = abort;

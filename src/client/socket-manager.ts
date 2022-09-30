@@ -1,4 +1,4 @@
-import { Env } from "src/common";
+import { AbortedRequestError, Env } from "src/common";
 import { PartitionInfo, partitionStubUrl } from "src/state/partition";
 
 interface PartitionHandler {
@@ -107,6 +107,12 @@ export class SocketManager {
         // updated, and the socket event handlers have been registered, the
         // connection is ready for sending
         return socket;
+      })
+      .catch((e) => {
+        if (this.controller.signal.aborted) {
+          throw new AbortedRequestError();
+        }
+        throw e;
       });
 
     // Mark connection as pending to prevent duplicate connections from being
