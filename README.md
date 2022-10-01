@@ -1,7 +1,5 @@
 # Kafka Worker
 
-**Note:** This project is a work in progress, and this document describes the desired end state. Only a subset of this has been implemented so far.
-
 A Kafka 0.8.0 broker implementation on top of Cloudflare Workers and Durable Objects. This broker supports 4 client-facing APIs:
 
 1. [Produce API](https://kafka.apache.org/protocol.html#The_Messages_Produce) (Version: 0)
@@ -9,7 +7,11 @@ A Kafka 0.8.0 broker implementation on top of Cloudflare Workers and Durable Obj
 3. [ListOffsets API](https://kafka.apache.org/protocol.html#The_Messages_ListOffsets) (Version: 0)
 4. [Metadata API](https://kafka.apache.org/protocol.html#The_Messages_Metadata) (Version: 0)
 
-No other APIs (such as administrative APIs) or API versions are supported.
+No other APIs (such as internal APIs used for administrative purposes) or API versions are supported. This project is a relatively simple proof of concept, and not intended to be used for anything serious.
+
+## Local Demo
+
+For a fully local demo, no Cloudflare account required, check out the [`kafka-worker-demo`](https://github.com/maxwellpeterson/kafka-worker-demo) project. 
 
 ## WebSocket Shim
 
@@ -27,7 +29,7 @@ Each client connection is handled by a "gateway worker" that runs in the Cloudfl
 
 There is none, at least not in the application code. The point of using Durable Objects here is that we can offload these complexities onto the infrastructure layer, and keep our application code focused and minimal. As described in the [initial blog post](https://blog.cloudflare.com/introducing-workers-durable-objects/), this is the serverless philosophy applied to persistent state. Replication and strong consistency mechanisms are implemented internally, and all we need to do is use the Durable Object API to reap these benefits. Building a Kafka broker without implementing replication and leadership election feels like cheating, but also makes this a much more tractable project.
 
-In this design, each deployment has one logical broker than spans Cloudflare's entire network. The hostname and port of this broker is the hostname and port of the gateway worker. Translated to the traditional Kafka model, this broker is the leader node for all partitions, and all partitions have zero replica nodes and zero ISR nodes.
+In this design, each deployment has one logical broker that spans Cloudflare's entire network. The hostname and port of this broker is the hostname and port of the gateway worker. Translated to the traditional Kafka model, this broker is the leader node for all partitions, and all partitions have zero replica nodes and zero ISR nodes. Again, there is still replication happening, it's just not visible to the broker implementation.
 
 ## Map
 

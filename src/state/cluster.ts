@@ -29,7 +29,7 @@ export const fetchClusterMetadata = async (
   return await response.json<KafkaMetadataResponse>();
 };
 
-interface ClusterState {
+interface ClusterMetadata {
   topics: {
     name: string;
     partitions: {
@@ -37,18 +37,21 @@ interface ClusterState {
     }[];
   }[];
 }
-const initialClusterState: ClusterState = {
-  topics: [{ name: "test-topic", partitions: [{ index: 0 }] }],
-};
-const clusterStateKey = "cluster-state";
+const clusterMetadataKey = "cluster_metadata";
 
 export class Cluster {
   private readonly state: DurableObjectState;
   private readonly env: Env;
 
+  private readonly initialMetadata: ClusterMetadata;
+
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
+
+    this.initialMetadata = JSON.parse(
+      env.INITIAL_CLUSTER_METADATA
+    ) as ClusterMetadata;
   }
 
   // TODO: This should be converted to a WebSocket protocol
@@ -61,9 +64,11 @@ export class Cluster {
     }
 
     const topicNames = topicQuery === "" ? [] : topicQuery.split(",");
+    // Metadata is never written to disk (for now) so the intial metadata will
+    // always be used here
     const state =
-      (await this.state.storage.get<ClusterState>(clusterStateKey)) ??
-      initialClusterState;
+      (await this.state.storage.get<ClusterMetadata>(clusterMetadataKey)) ??
+      this.initialMetadata;
 
     const brokers = [
       {
@@ -99,7 +104,7 @@ export class Cluster {
   }
 }
 
-type TopicState = ElemOf<ClusterState["topics"]>;
+type TopicState = ElemOf<ClusterMetadata["topics"]>;
 type TopicMetadata = ElemOf<KafkaMetadataResponse["topics"]>;
 
 const generateMetadata = (topic: TopicState): TopicMetadata => ({

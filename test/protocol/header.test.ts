@@ -6,7 +6,7 @@ import {
   decodeRequestHeader,
   encodeRequestHeader,
 } from "src/protocol/header";
-import { base64 } from "test/common";
+import { testEncodeDecodeSnapshot } from "test/protocol/common";
 
 describe("RequestHeader", () => {
   type TestCase = [string, RequestHeader<ApiKey>];
@@ -49,15 +49,12 @@ describe("RequestHeader", () => {
     ],
   ];
 
-  test.each(cases)("%s", (_name, header) => {
-    const encoder = new Encoder();
-    const buffer = encodeRequestHeader(encoder, header).buffer();
-
-    expect(base64(buffer)).toMatchSnapshot();
-
-    const decoder = new Decoder(buffer);
-    const output = decodeRequestHeader(decoder, validApiKey);
-
-    expect(header).toEqual(output);
+  test.each(cases)("%s", (_name, value) => {
+    testEncodeDecodeSnapshot(
+      value,
+      (encoder: Encoder, header: RequestHeader<ApiKey>) =>
+        encodeRequestHeader(encoder, header).buffer(),
+      (decoder: Decoder) => decodeRequestHeader(decoder, validApiKey)
+    );
   });
 });

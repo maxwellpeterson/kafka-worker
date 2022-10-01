@@ -9,6 +9,7 @@ command = "node build.js"
 HOSTNAME="localhost"
 PORT="8787"
 PARTITION_CHUNK_SIZE="4096"
+INITIAL_CLUSTER_METADATA="{\"topics\":[{\"name\":\"test-topic\",\"partitions\":[{\"index\":0}]}]}"
 
 [durable_objects]
 bindings = [

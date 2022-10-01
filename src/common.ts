@@ -6,6 +6,8 @@ export type Env = Readonly<{
   PORT: string;
   // The size of partition storage chunks in bytes (required)
   PARTITION_CHUNK_SIZE: string;
+  // A JSON string describing which topics and partitions should exist
+  INITIAL_CLUSTER_METADATA: string;
   CLUSTER: DurableObjectNamespace;
   PARTITION: DurableObjectNamespace;
 }>;

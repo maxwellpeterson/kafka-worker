@@ -366,6 +366,7 @@ const chunkId = (offsetStart: Chunk["offsetStart"]): ChunkId =>
   `${chunkIdPrefix}-${offsetStart.toString()}`;
 
 export class PartitionInfo {
+  private static readonly delim = "_";
   readonly topic: string;
   readonly index: number;
   readonly id: string;
@@ -373,11 +374,11 @@ export class PartitionInfo {
   constructor(topic: string, index: number) {
     this.topic = topic;
     this.index = index;
-    this.id = `${topic}-${index}`;
+    this.id = `${topic}${PartitionInfo.delim}${index}`;
   }
 
   static fromId(id: string): PartitionInfo {
-    const delimIndex = id.lastIndexOf("-");
+    const delimIndex = id.lastIndexOf(this.delim);
     return new PartitionInfo(
       id.slice(0, delimIndex),
       parseInt(id.slice(delimIndex + 1))

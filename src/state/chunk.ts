@@ -10,19 +10,32 @@ import {
 } from "src/protocol/common";
 
 export interface Chunk {
+  // The offset of the first message in the chunk
   offsetStart: Int64;
   buffer: ArrayBuffer;
+  // Framing information about messages stored in the buffer
   frames: MessageFrame[];
+  // The next available index in the buffer (the next message should be written
+  // to the buffer starting at this index)
   nextIndex: number;
 }
+// TODO: Change to interface/object type for better readability
+// export interface MessageFrame {
+//   startIndex: number;
+//   size: number
+// }
 // Tuple of [startIndex, size]
 export type MessageFrame = [number, number];
 
+// Performs required preprocessing and validation on a message set from a
+// Produce request before it can be written to chunks
 export const prepareMessageSet = (
   messageSet: MessageSet,
   initialOffset: Int64
 ): { filler: ChunkFiller } | { error: ErrorCode } => {
-  // TODO: What is going on here? Node-specific weirdness?
+  // TODO: What is going on here? Node-specific weirdness? Instantiating this
+  // with `new DataView(messageSet)` type-checks, but crashes under test with
+  // the error "First argument to DataView constructor must be an ArrayBuffer"
   const view = new DataView(
     messageSet.buffer,
     messageSet.byteOffset,
@@ -47,7 +60,7 @@ export const prepareMessageSet = (
     }
     viewIndex += int32Size;
 
-    // Verify crc of message contents
+    // Verify crc of remainder of message
     const crcExpected = view.getInt32(viewIndex);
     // eslint-disable-next-line import/no-named-as-default-member
     const crcActual = crc32.buf(
@@ -61,26 +74,29 @@ export const prepareMessageSet = (
       return { error: ErrorCode.CorruptMessage };
     }
 
-    // Depending on the value of the magic byte, there may or may not be an
-    // "attributes" byte right after it
+    // If the magic byte is one, there is an additional attributes byte right
+    // after the magic byte, and if the magic byte is zero then there is no
+    // attributes byte
     // https://kafka.apache.org/08/documentation/#messageformat
     const magicByte = view.getInt8(viewIndex + int32Size);
     if (magicByte === 1) {
-      // Check attributes byte to make sure that message set is not compressed
+      // Check attributes byte to make sure that message set is not compressed,
+      // since we don't support compression
       const attributes = view.getInt8(viewIndex + int32Size + int8Size);
+      // If message set is compressed, attributes byte will be nonzero
       if (attributes !== 0) {
         console.log(`Attributes check failed, attributes: ${attributes}`);
         // There isn't a good error code for this that dates back to 0.8.0
         return { error: ErrorCode.UnknownServerError };
       }
     } else if (magicByte !== 0) {
-      // The magic byte can only be 0 or 1
+      // The magic byte can only be 0 or 1 (for this version of Kafka)
       console.log(`Magic byte check failed, magic byte: ${magicByte}`);
       // There isn't a good error code for this that dates back to 0.8.0
       return { error: ErrorCode.UnknownServerError };
     }
 
-    // Record starting index and size of message
+    // Save framing information about message
     frames.push([frameStart, int64Size + int32Size + messageSize]);
     viewIndex += messageSize;
   }
@@ -88,6 +104,8 @@ export const prepareMessageSet = (
   return { filler: new ChunkFiller(messageSet, frames) };
 };
 
+// Stores a preprocessed message set that can be written incrementally to
+// multiple chunks
 export class ChunkFiller {
   private messageSet: MessageSet;
   private frames: MessageFrame[];
@@ -113,11 +131,12 @@ export class ChunkFiller {
     const [finalFrameStart, finalFrameSize] = this.frames[frameCount - 1];
     const copySize = finalFrameStart + finalFrameSize;
 
-    // Copy message data into chunk, including framing information
+    // Copy message data into chunk
     new Uint8Array(chunk.buffer).set(
       this.messageSet.subarray(0, copySize),
       chunk.nextIndex
     );
+    // Copy message framing information into chunk
     chunk.frames.push(
       ...this.frames
         .slice(0, frameCount)
@@ -130,12 +149,13 @@ export class ChunkFiller {
     this.messageSet = this.messageSet.subarray(copySize);
     this.frames = this.frames
       .slice(frameCount)
-      // Reindex message frames based on trimmed buffer
+      // Reindex message frames after copied data is discarded
       .map(([start, size]) => [start - copySize, size]);
 
     return frameCount;
   }
 
+  // Returns true if there are no more messages that need be written
   done(): boolean {
     return this.frames.length === 0;
   }

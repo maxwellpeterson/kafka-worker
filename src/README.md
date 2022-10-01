@@ -2,11 +2,11 @@
 
 This folder contains all source files, not including tests.
 
-The `client` folder contains files related to managing client connections. This includes converting Kafka API requests into internal API requests, converting internal API responses into Kafka API responses, forwarding internal API requests to Durable Objects, and handling the fan out of internal requests and fan in of internal responses.
+The `client` folder contains files related to the gateway worker, which manages client connections. This includes converting Kafka API requests into internal API requests, converting internal API responses into Kafka API responses, forwarding internal API requests to Durable Objects, and handling the fan out of internal requests and fan in of internal responses.
 
 The `protocol` folder contains files related to the Kafka wire protocol and internal wire protocol. This includes API request and response type definitions and encoding and decoding functions. All this code does is convert JavaScript objects to ArrayBuffers, and vice-versa, so it's not super interesting.
 
-The `state` folder contains files related to persistent state stored in Durable Objects. This includes records stored in partitions, as well as information about which topics and partitions exist. The code in the `client` folder interacts with the code in the `state` folder by making an HTTP request or sending a WebSocket message to one of these Durable Objects.
+The `state` folder contains files related to Durable Objects. These Durable Objects store partition data, as well as information about which topics and partitions exist. The code in the `client` folder interacts with the code in the `state` folder by making an HTTP request or sending a WebSocket message to one of these Durable Objects.
 
 The `common.ts` file contains general-purpose types and functions that are used across the entire project.
 
